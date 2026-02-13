@@ -396,45 +396,75 @@ function Onboarding({profile,setProfile,onComplete,t}){
 // ═══════════════════════════════════════════
 function ProfileSettings({profile,setProfile,onGenerate,onSave,saving,t}){
   const up=(k,v)=>setProfile(p=>({...p,[k]:v}));
-  return <div style={{maxWidth:580,margin:"0 auto",animation:"fadeUp 0.5s ease-out"}}>
+  return <div style={{maxWidth:640,margin:"0 auto",animation:"fadeUp 0.5s ease-out"}}>
     <h2 style={{fontFamily:t.fb,fontSize:22,fontWeight:700,color:t.text,margin:"0 0 6px"}}>Preferences</h2>
-    <p style={{fontSize:14,color:t.textMut,margin:"0 0 28px",fontFamily:t.fb}}>Update your topics, companies, and settings.</p>
+    <p style={{fontSize:14,color:t.textMut,margin:"0 0 28px",fontFamily:t.fb}}>All your settings in one place.</p>
 
-    <div style={{marginBottom:24}}>
-      <label style={{fontSize:13,fontWeight:700,color:t.textSec,display:"block",marginBottom:10,fontFamily:t.fb}}>Topics</label>
-      <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:12}}>
-        {QUICK_CATS.map(c=>{const on=profile.categories.includes(c);return <button key={c} onClick={()=>up("categories",on?profile.categories.filter(x=>x!==c):[...profile.categories,c])} style={{padding:"8px 16px",fontSize:13,fontWeight:on?700:500,background:on?t.tagOnBg:t.tagBg,color:on?t.tagOnText:t.tagText,border:on?"none":`1px solid ${t.pillBorder||t.border}`,borderRadius:t.rPill,cursor:"pointer",boxShadow:on?t.tagOnShadow:"none",fontFamily:t.fb,transition:"all 0.2s"}}>{c}</button>;})}
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:24}}>
+      {/* LEFT COLUMN */}
+      <div>
+        <h3 style={{fontSize:14,fontWeight:700,color:t.text,marginBottom:12,fontFamily:t.fb}}>Content</h3>
+
+        <div style={{marginBottom:20}}>
+          <label style={{fontSize:13,fontWeight:600,color:t.textSec,display:"block",marginBottom:10,fontFamily:t.fb}}>Topics</label>
+          <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10}}>
+            {QUICK_CATS.map(c=>{const on=profile.categories.includes(c);return <button key={c} onClick={()=>up("categories",on?profile.categories.filter(x=>x!==c):[...profile.categories,c])} style={{padding:"6px 12px",fontSize:12,fontWeight:on?700:500,background:on?t.tagOnBg:t.tagBg,color:on?t.tagOnText:t.tagText,border:on?"none":`1px solid ${t.pillBorder||t.border}`,borderRadius:t.rPill,cursor:"pointer",boxShadow:on?t.tagOnShadow:"none",fontFamily:t.fb,transition:"all 0.2s"}}>{c}</button>;})}
+          </div>
+          <TagInput tags={profile.categories.filter(c=>!QUICK_CATS.includes(c))} setTags={custom=>up("categories",[...profile.categories.filter(c=>QUICK_CATS.includes(c)),...custom])} placeholder="Custom topic" t={t}/>
+        </div>
+
+        <div style={{marginBottom:20}}>
+          <label style={{fontSize:13,fontWeight:600,color:t.textSec,display:"block",marginBottom:8,fontFamily:t.fb}}>Companies <span style={{fontWeight:400,color:t.textMut,fontSize:12}}>(optional)</span></label>
+          <TagInput tags={profile.companies} setTags={v=>up("companies",v)} placeholder="e.g. Microsoft, Stripe" t={t}/>
+        </div>
+
+        <div style={{marginBottom:20}}>
+          <label style={{fontSize:13,fontWeight:600,color:t.textSec,display:"block",marginBottom:8,fontFamily:t.fb}}>Expertise <span style={{fontWeight:400,color:t.textMut,fontSize:12}}>(optional)</span></label>
+          <TagInput tags={profile.expertise} setTags={v=>up("expertise",v)} placeholder="e.g. Machine Learning, M&A" t={t}/>
+        </div>
+
+        <div style={{marginBottom:20}}>
+          <label style={{fontSize:13,fontWeight:600,color:t.textSec,display:"block",marginBottom:8,fontFamily:t.fb}}>Summary Style</label>
+          <StylePicker value={profile.summary_style||"brief"} setValue={v=>up("summary_style",v)} t={t}/>
+        </div>
+
+        <div>
+          <label style={{fontSize:13,fontWeight:600,color:t.textSec,display:"block",marginBottom:8,fontFamily:t.fb}}>Articles per section: <span style={{color:t.accentSolid}}>{profile.max_articles_per_section}</span></label>
+          <input type="range" min={2} max={10} value={profile.max_articles_per_section} onChange={e=>up("max_articles_per_section",+e.target.value)} style={{width:"100%",accentColor:t.accentSolid}}/>
+        </div>
       </div>
-      <TagInput tags={profile.categories.filter(c=>!QUICK_CATS.includes(c))} setTags={custom=>up("categories",[...profile.categories.filter(c=>QUICK_CATS.includes(c)),...custom])} placeholder="Add custom topic\u2026" t={t}/>
-    </div>
 
-    <div style={{marginBottom:24}}>
-      <label style={{fontSize:13,fontWeight:700,color:t.textSec,display:"block",marginBottom:8,fontFamily:t.fb}}>Companies <span style={{fontWeight:400,color:t.textMut}}>(optional)</span></label>
-      <TagInput tags={profile.companies} setTags={v=>up("companies",v)} placeholder="e.g. Microsoft, Stripe" t={t}/>
-    </div>
+      {/* RIGHT COLUMN */}
+      <div>
+        <h3 style={{fontSize:14,fontWeight:700,color:t.text,marginBottom:12,fontFamily:t.fb}}>Sources & Delivery</h3>
 
-    <div style={{marginBottom:24}}>
-      <label style={{fontSize:13,fontWeight:700,color:t.textSec,display:"block",marginBottom:8,fontFamily:t.fb}}>Expertise <span style={{fontWeight:400,color:t.textMut}}>(optional)</span></label>
-      <TagInput tags={profile.expertise} setTags={v=>up("expertise",v)} placeholder="e.g. Machine Learning, M&A" t={t}/>
-    </div>
+        <div style={{marginBottom:20}}>
+          <label style={{fontSize:13,fontWeight:600,color:t.textSec,display:"block",marginBottom:8,fontFamily:t.fb}}>Paywalled sources</label>
+          <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:8}}>
+            {PAYWALLED.slice(0,6).map(d=>{const on=(profile.paywalled_sources||[]).includes(d);return <button key={d} onClick={()=>setProfile(p=>({...p,paywalled_sources:on?(p.paywalled_sources||[]).filter(x=>x!==d):[...(p.paywalled_sources||[]),d]}))} style={{padding:"5px 10px",fontSize:11,fontWeight:on?700:500,background:on?t.tagOnBg:t.tagBg,color:on?t.tagOnText:t.tagText,border:on?"none":`1px solid ${t.pillBorder||t.border}`,borderRadius:t.rPill,cursor:"pointer",fontFamily:t.fb,transition:"all 0.15s"}}>{PAYWALLED_DISPLAY[d]?.split(' ')[0]||d.split('.')[0]}</button>;})}
+          </div>
+        </div>
 
-    <div style={{marginBottom:18}}>
-      <label style={{fontSize:13,fontWeight:700,color:t.textSec,display:"block",marginBottom:8,fontFamily:t.fb}}>Paywalled sources \u2014 select any to include</label>
-      <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:12}}>
-        {PAYWALLED.map(d=>{const on=(profile.paywalled_sources||[]).includes(d);return <button key={d} onClick={()=>setProfile(p=>({...p,paywalled_sources:on?(p.paywalled_sources||[]).filter(x=>x!==d):[...(p.paywalled_sources||[]),d]}))} style={{padding:"8px 12px",fontSize:13,fontWeight:on?700:500,background:on?t.tagOnBg:t.tagBg,color:on?t.tagOnText:t.tagText,border:on?"none":`1px solid ${t.pillBorder||t.border}`,borderRadius:t.rPill,cursor:"pointer",fontFamily:t.fb,transition:"all 0.15s"}}>{PAYWALLED_DISPLAY[d]||d}</button>;})}
+        <div style={{marginBottom:20}}>
+          <label style={{fontSize:13,fontWeight:600,color:t.textSec,display:"block",marginBottom:8,fontFamily:t.fb}}>Blocked sources</label>
+          <TagInput tags={profile.blocked_sources||[]} setTags={v=>setProfile(p=>({...p,blocked_sources:v}))} placeholder="e.g. foxnews.com" t={t}/>
+        </div>
+
+        <div style={{padding:14,background:t.bgCard,border:`1px solid ${t.border}`,borderRadius:t.r,marginBottom:16}}>
+          <div style={{marginBottom:12}}>
+            <Toggle value={profile.email_delivery||false} onChange={v=>up("email_delivery",v)} label="Enable daily email delivery" t={t}/>
+          </div>
+          {(profile.email_delivery||false)&&<div>
+            <label style={{fontSize:12,fontWeight:600,color:t.textSec,display:"block",marginBottom:8,fontFamily:t.fb}}>Delivery time (your local time)</label>
+            <input type="time" value={profile.delivery_time||"08:00"} onChange={e=>up("delivery_time",e.target.value)} style={{width:"100%",padding:"8px 12px",fontSize:14,border:`2px solid ${t.pillBorder||t.border}`,borderRadius:t.r,background:t.bgInput,color:t.text,outline:"none",fontFamily:t.fb,boxSizing:"border-box"}}/>
+          </div>}
+        </div>
       </div>
-      <label style={{fontSize:13,fontWeight:700,color:t.textSec,display:"block",marginBottom:8,fontFamily:t.fb}}>Blocked sources <span style={{fontWeight:400,color:t.textMut}}>(domains to exclude)</span></label>
-      <TagInput tags={profile.blocked_sources||[]} setTags={v=>setProfile(p=>({...p,blocked_sources:v}))} placeholder="e.g. foxnews.com" t={t}/>
     </div>
 
-    <div style={{marginBottom:32}}>
-      <label style={{fontSize:13,fontWeight:700,color:t.textSec,display:"block",marginBottom:8,fontFamily:t.fb}}>Articles per section \u2014 <span style={{color:t.accentSolid}}>{profile.max_articles_per_section}</span></label>
-      <input type="range" min={2} max={10} value={profile.max_articles_per_section} onChange={e=>up("max_articles_per_section",+e.target.value)} style={{width:"100%",accentColor:t.accentSolid}}/>
-    </div>
-
-    <div style={{display:"flex",gap:10}}>
-      <button onClick={onSave} disabled={saving} style={{padding:"12px 24px",fontSize:13,fontWeight:600,background:"transparent",color:t.textSec,border:`2px solid ${t.pillBorder||t.border}`,borderRadius:t.r,cursor:"pointer",fontFamily:t.fb}}>{saving?"Saving\u2026":"Save"}</button>
-      <button onClick={onGenerate} disabled={profile.categories.length===0} style={{flex:1,padding:"13px 0",fontSize:14,fontWeight:700,background:profile.categories.length>0?t.accent:t.bgAlt,color:profile.categories.length>0?t.accentText:t.textFaint,border:"none",borderRadius:t.r,cursor:profile.categories.length>0?"pointer":"not-allowed",boxShadow:profile.categories.length>0?t.accentShadow:"none",fontFamily:t.fb,transition:"all 0.2s"}}>Generate Brief</button>
+    <div style={{display:"flex",gap:10,marginTop:28}}>
+      <button onClick={onSave} disabled={saving} style={{padding:"12px 24px",fontSize:13,fontWeight:600,background:"transparent",color:t.textSec,border:`2px solid ${t.pillBorder||t.border}`,borderRadius:t.r,cursor:"pointer",fontFamily:t.fb}}>{saving?"Saving\u2026":"Save Preferences"}</button>
+      <button onClick={onGenerate} disabled={profile.categories.length===0} style={{flex:1,padding:"13px 0",fontSize:14,fontWeight:700,background:profile.categories.length>0?t.accent:t.bgAlt,color:profile.categories.length>0?t.accentText:t.textFaint,border:"none",borderRadius:t.r,cursor:profile.categories.length>0?"pointer":"not-allowed",boxShadow:profile.categories.length>0?t.accentShadow:"none",fontFamily:t.fb,transition:"all 0.2s"}}>Generate Brief Now</button>
     </div>
   </div>;
 }
@@ -460,6 +490,54 @@ function GeneratingScreen({progress,stage,t}){
 }
 
 // ═══════════════════════════════════════════
+//  WHITELIST INSTRUCTIONS MODAL
+// ═══════════════════════════════════════════
+function WhitelistModal({onClose,t}){
+  return <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,zIndex:9999,animation:"fadeIn 0.2s"}}>
+    <div onClick={e=>e.stopPropagation()} style={{background:t.bgCard,borderRadius:t.r,maxWidth:560,width:"100%",maxHeight:"90vh",overflow:"auto",boxShadow:"0 20px 60px rgba(0,0,0,0.3)",animation:"slideUp 0.3s"}}>
+      <div style={{padding:"20px 24px",borderBottom:`1px solid ${t.border}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <h3 style={{margin:0,fontSize:18,fontWeight:700,color:t.text,fontFamily:t.fb}}>Whitelist Morning Brief Emails</h3>
+        <button onClick={onClose} style={{background:"transparent",border:"none",fontSize:24,color:t.textMut,cursor:"pointer",padding:0,lineHeight:1}}>&times;</button>
+      </div>
+      <div style={{padding:24,fontFamily:t.fb,fontSize:14,lineHeight:1.7,color:t.text}}>
+        <p style={{marginTop:0,color:t.textMut}}>Emails landing in junk? Follow these steps to ensure Morning Brief emails reach your inbox:</p>
+
+        <div style={{marginBottom:20}}>
+          <h4 style={{fontSize:15,fontWeight:700,color:t.accentSolid,margin:"16px 0 8px"}}>Outlook / Office 365</h4>
+          <ol style={{margin:0,paddingLeft:20,color:t.text}}>
+            <li style={{marginBottom:8}}>Right-click the email → "Junk" → "Never Block Sender"</li>
+            <li style={{marginBottom:8}}>Or: Settings → Mail → Junk email → Add <code style={{background:t.bgAlt,padding:"2px 6px",borderRadius:4,fontSize:13}}>noreply@petarivancevic.com</code> to Safe Senders</li>
+            <li style={{marginBottom:8}}>Drag email from Junk to Inbox to train the filter</li>
+          </ol>
+        </div>
+
+        <div style={{marginBottom:20}}>
+          <h4 style={{fontSize:15,fontWeight:700,color:t.accentSolid,margin:"16px 0 8px"}}>Gmail</h4>
+          <ol style={{margin:0,paddingLeft:20,color:t.text}}>
+            <li style={{marginBottom:8}}>Open email in Spam folder → Click "Not spam"</li>
+            <li style={{marginBottom:8}}>Click sender name → "Add to contacts"</li>
+            <li style={{marginBottom:8}}>Or: Search <code style={{background:t.bgAlt,padding:"2px 6px",borderRadius:4,fontSize:13}}>from:noreply@petarivancevic.com</code> → "Create filter" → Check "Never send to Spam"</li>
+          </ol>
+        </div>
+
+        <div style={{marginBottom:20}}>
+          <h4 style={{fontSize:15,fontWeight:700,color:t.accentSolid,margin:"16px 0 8px"}}>Apple Mail</h4>
+          <ol style={{margin:0,paddingLeft:20,color:t.text}}>
+            <li style={{marginBottom:8}}>Open email → Click sender → "Add to Contacts"</li>
+            <li style={{marginBottom:8}}>Mark as "Not Junk" if in Junk folder</li>
+          </ol>
+        </div>
+
+        <div style={{padding:12,background:t.alertBg,border:`1px solid ${t.alertBorder}`,borderRadius:t.r,fontSize:13,color:t.alertText,marginTop:16}}>
+          <strong>Note:</strong> It may take a few emails to build sender reputation. Each email you receive and don't mark as spam helps improve future deliverability.
+        </div>
+      </div>
+    </div>
+    <style>{`@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}@keyframes slideUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}`}</style>
+  </div>;
+}
+
+// ═══════════════════════════════════════════
 //  DIGEST VIEW
 // ═══════════════════════════════════════════
 function DigestView({digest,profile,onBack,onSettings,aiEnabled,t,session}){
@@ -469,6 +547,7 @@ function DigestView({digest,profile,onBack,onSettings,aiEnabled,t,session}){
   const[copied,setCopied]=useState(false);
   const[emailing,setEmailing]=useState(false);
   const[emailSent,setEmailSent]=useState(false);
+  const[showWhitelist,setShowWhitelist]=useState(false);
   const copyDigest=()=>{navigator.clipboard.writeText(digestToText(sections)).then(()=>{setCopied(true);setTimeout(()=>setCopied(false),2000);}).catch(()=>{});};
   const emailDigest=async()=>{setEmailing(true);try{const r=await fetch('/api/send-digest',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:session?.user?.email,sections:sections,userName:session?.user?.email?.split('@')[0],generatedAt:digest.generated_at||new Date().toISOString()})});if(r.ok){setEmailSent(true);setTimeout(()=>setEmailSent(false),3000);}else{throw new Error('Failed to send');}}catch(e){console.error(e);alert('Failed to send email. Please try again.');}finally{setEmailing(false);}};
   const companyMentions=useMemo(()=>{const counts={};for(const arts of Object.values(sections)){for(const a of arts){const matches=matchesCompany(a,profile.companies);matches.forEach(c=>{counts[c]=(counts[c]||0)+1;});}}return counts;},[sections,profile.companies]);
@@ -503,12 +582,15 @@ function DigestView({digest,profile,onBack,onSettings,aiEnabled,t,session}){
           </span>;})}
         </div>
       </div>
-      <div style={{position:"absolute",right:12,top:8,display:"flex",gap:8}}>
+      <div style={{position:"absolute",right:12,top:8,display:"flex",gap:8,flexWrap:"wrap"}}>
+        <button onClick={()=>setShowWhitelist(true)} style={{padding:"6px 10px",fontSize:12,background:"transparent",color:t.alertText,border:`1px solid ${t.alertBorder}`,borderRadius:6,cursor:"pointer",fontFamily:t.fb}}>📧 Whitelist</button>
         <button onClick={emailDigest} disabled={emailing} style={{padding:"6px 10px",fontSize:12,background:emailSent?t.successBg:"transparent",color:emailSent?t.successText:t.textSec,border:`1px solid ${t.pillBorder||t.border}`,borderRadius:6,cursor:emailing?"wait":"pointer",fontFamily:t.fb}}>{emailSent?"\u2713 Emailed":emailing?"Sending\u2026":"Email This"}</button>
         <button onClick={copyDigest} style={{padding:"6px 10px",fontSize:12,background:copied?t.successBg:"transparent",color:copied?t.successText:t.textSec,border:`1px solid ${t.pillBorder||t.border}`,borderRadius:6,cursor:"pointer",fontFamily:t.fb}}>{copied?"\u2713 Copied":"Copy"}</button>
         <button onClick={onSettings} style={{padding:"6px 10px",fontSize:12,background:"transparent",color:t.textSec,border:`1px solid ${t.pillBorder||t.border}`,borderRadius:6,cursor:"pointer",fontFamily:t.fb}}>Settings</button>
       </div>
     </div>
+
+    {showWhitelist&&<WhitelistModal onClose={()=>setShowWhitelist(false)} t={t}/>}
 
     {leadArticle&&(()=>{
       const lc=matchesCompany(leadArticle,profile.companies);
@@ -622,7 +704,7 @@ export default function App(){
     const rows=await dbApi.select("profiles",at,{id:uid});
     if(rows.length>0){
       const p=rows[0];
-      setProfile({categories:p.categories||["Technology","Business"],expertise:p.expertise||[],companies:p.companies||[],paywalled_sources:p.paywalled_sources||[],blocked_sources:p.blocked_sources||[],max_articles_per_section:p.max_articles_per_section||5,summary_style:p.summary_style||"brief"});
+      setProfile({categories:p.categories||["Technology","Business"],expertise:p.expertise||[],companies:p.companies||[],paywalled_sources:p.paywalled_sources||[],blocked_sources:p.blocked_sources||[],max_articles_per_section:p.max_articles_per_section||5,summary_style:p.summary_style||"brief",email_delivery:p.email_delivery||false,delivery_time:p.delivery_time||"08:00"});
       setIsNewUser(false);
     }else{setIsNewUser(true);}
     const digs=await dbApi.select("digests",at,{user_id:uid});
@@ -770,7 +852,11 @@ export default function App(){
       input::placeholder{color:${t.textFaint} !important;}
       input:focus{border-color:${t.borderFocus} !important;}
       *{box-sizing:border-box;}
-      @media(max-width:600px){h1{font-size:22px !important;}h2{font-size:20px !important;}}
+      @media(max-width:768px){
+        h1{font-size:22px !important;}
+        h2{font-size:20px !important;}
+        [style*="grid-template-columns: 1fr 1fr"]{grid-template-columns:1fr !important;}
+      }
     `}</style>
 
     {session&&!["auth","loading","onboarding"].includes(view)&&(
