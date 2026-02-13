@@ -1,0 +1,23 @@
+name: Send Daily Briefs
+
+# Run every hour
+on:
+  schedule:
+    - cron: '0 * * * *'  # Every hour at minute 0
+  workflow_dispatch:  # Allow manual trigger for testing
+
+jobs:
+  send-briefs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Send scheduled briefs
+        run: |
+          curl -X POST ${{ secrets.VERCEL_URL }}/api/cron/send-daily-briefs \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json" \
+            --fail-with-body \
+            || echo "Failed to send briefs, but continuing..."
+
+      - name: Log completion
+        run: echo "Daily brief cron job completed at $(date)"
