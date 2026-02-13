@@ -43,7 +43,7 @@ This guide will help you set up Supabase for authentication, database, and email
 ```html
 <h2>Sign in to Morning Brief</h2>
 <p>Click the link below to sign in to your account:</p>
-<p><a href="{{ .ConfirmationURL }}">Sign in</a></p>
+<p><a href="{{ .ConfirmationURL }}">Magic Link</a></p>
 <p>Or copy and paste this URL into your browser:</p>
 <p>{{ .ConfirmationURL }}</p>
 <p>This link expires in 60 minutes.</p>

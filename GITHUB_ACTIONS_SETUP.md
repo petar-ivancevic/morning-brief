@@ -39,7 +39,7 @@ The workflow file is already in your repo at `.github/workflows/daily-brief.yml`
 
 Just push your changes:
 ```bash
-git push origin main
+![1771002245912](image/GITHUB_ACTIONS_SETUP/1771002245912.png)
 ```
 
 ### Step 3: Enable Actions (if needed)

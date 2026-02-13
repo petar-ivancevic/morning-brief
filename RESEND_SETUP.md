@@ -153,7 +153,7 @@ If you want more control, you can send emails directly via Resend API instead of
 
 ```html
 <!DOCTYPE html>
-<html>
+<html>![1770998232881](image/RESEND_SETUP/1770998232881.png)
 <head>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }

@@ -201,6 +201,38 @@ function Badge({label,bg,border,color,t}){
 }
 
 // ═══════════════════════════════════════════
+//  ADMIN LOGIN
+// ═══════════════════════════════════════════
+function AdminLogin({onSuccess,t,dark,setDark}){
+  const[password,setPassword]=useState("");
+  const[error,setError]=useState("");
+  const adminPassword=import.meta.env.VITE_ADMIN_PASSWORD||"admin123";
+
+  const handleLogin=()=>{
+    if(password===adminPassword){
+      try{localStorage.setItem("mb_admin_auth","1");}catch{}
+      onSuccess();
+    }else{
+      setError("Incorrect password");
+      setTimeout(()=>setError(""),2000);
+    }
+  };
+
+  return <div style={{maxWidth:400,margin:"0 auto",paddingTop:60,animation:"fadeUp 0.6s ease-out"}}>
+    <div style={{display:"flex",justifyContent:"flex-end",marginBottom:24}}><ThemeToggle dark={dark} setDark={setDark} t={t}/></div>
+    <div style={{textAlign:"center",marginBottom:40}}>
+      <div style={{width:52,height:52,borderRadius:t.logoR,margin:"0 auto 16px",background:t.logoBg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,color:t.accentText,boxShadow:t.accentShadow}}>{t.logo}</div>
+      <h1 style={{fontFamily:t.fd,fontSize:26,fontWeight:700,color:t.text,margin:"0 0 8px"}}>Admin Access</h1>
+      <p style={{color:t.textMut,fontSize:14,margin:0,lineHeight:1.6,fontFamily:t.fb}}>Enter admin password to continue.</p>
+    </div>
+    <label style={{fontSize:13,fontWeight:700,color:t.textSec,display:"block",marginBottom:8,fontFamily:t.fb}}>Admin Password</label>
+    <input value={password} onChange={e=>setPassword(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleLogin()} placeholder="Enter password" type="password" style={{width:"100%",padding:"13px 16px",fontSize:15,border:`2px solid ${t.pillBorder||t.border}`,borderRadius:t.r,background:t.bgInput,color:t.text,outline:"none",fontFamily:t.fb,boxSizing:"border-box",marginBottom:16,transition:"border-color 0.2s"}}/>
+    <button onClick={handleLogin} disabled={!password} style={{width:"100%",padding:"14px 0",fontSize:14,fontWeight:700,background:t.accent,color:t.accentText,border:"none",borderRadius:t.r,cursor:!password?"not-allowed":"pointer",boxShadow:t.accentShadow,fontFamily:t.fb,opacity:!password?0.6:1,transition:"all 0.2s"}}>Access Admin Panel</button>
+    {error&&<div style={{marginTop:16,padding:"12px 16px",background:t.errBg,border:`1px solid ${t.errBorder}`,borderRadius:t.r,color:t.errText,fontSize:13,fontFamily:t.fb,textAlign:"center"}}>{error}</div>}
+  </div>;
+}
+
+// ═══════════════════════════════════════════
 //  AUTH SCREEN
 // ═══════════════════════════════════════════
 function AuthScreen({t,dark,setDark}){
@@ -542,13 +574,14 @@ function Dashboard({profile,onGenerate,onSettings,digests,onViewDigest,t}){
 // ═══════════════════════════════════════════
 export default function App(){
   const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams();
+  const isAdminRoute = typeof window !== "undefined" && window.location.pathname === "/admin";
   const skipLogin = typeof window !== "undefined" && (params.get("skip_login") === "1" || localStorage.getItem("mb_skip_auth") === "1");
   const skipTarget = params.get("skip_to") || "dashboard"; // use ?skip_to=settings to open Preferences
   const[dark,setDark]=useState(()=>{try{return localStorage.getItem("mb_theme")==="dark";}catch{return false;}});
   const t=dark?themes.dark:themes.light;
   useEffect(()=>{try{localStorage.setItem("mb_theme",dark?"dark":"light");}catch{}},[dark]);
 
-  const[view,setView]=useState(skipLogin?skipTarget:"loading");
+  const[view,setView]=useState(skipLogin?skipTarget:(isAdminRoute?"admin_check":"loading"));
   const[session,setSession]=useState(skipLogin?{access_token:"",refresh_token:"",user:{id:"dev",email:"dev@example.com"}}:null);
   const[profile,setProfile]=useState(skipLogin?{...DEFAULT_PROFILE}:{...DEFAULT_PROFILE});
   const[digest,setDigest]=useState(null);
@@ -571,9 +604,30 @@ export default function App(){
     if(digs.length>0)setAllDigests(digs.sort((a,b)=>new Date(b.generated_at)-new Date(a.generated_at)));
   },[]);
 
+  const handleAdminLogin=useCallback(()=>{
+    const adminSession={access_token:"admin",refresh_token:"admin",user:{id:"admin",email:"admin@morningbrief.local"}};
+    setSession(adminSession);
+    setProfile({...DEFAULT_PROFILE});
+    setView("dashboard");
+  },[]);
+
   useEffect(()=>{
     const init=async()=>{
       if(skipLogin){ setView(skipTarget); return; }
+
+      // Check for admin auth
+      if(isAdminRoute){
+        try{
+          const isAdmin=localStorage.getItem("mb_admin_auth")==="1";
+          if(isAdmin){
+            handleAdminLogin();
+            return;
+          }
+        }catch{}
+        setView("admin_login");
+        return;
+      }
+
       const ht=parseHashTokens();
       if(ht){const u=await authApi.getUser(ht.access_token);if(u){const s={access_token:ht.access_token,refresh_token:ht.refresh_token,user:u};saveSession(s);setSession(s);await loadUserData(s.access_token,s.user.id);setView(null);return;}}
       const saved=loadSession();
@@ -587,7 +641,7 @@ export default function App(){
       setView("auth");
     };
     init();
-  },[loadUserData]);
+  },[loadUserData,handleAdminLogin,isAdminRoute]);
 
   useEffect(()=>{if(view===null&&session){setView(isNewUser?"onboarding":"dashboard");}},[view,session,isNewUser]);
 
@@ -666,8 +720,10 @@ export default function App(){
   },[session,profile]);
 
   const signOut=useCallback(async()=>{
-    if(session)await authApi.signOut(session.access_token);
-    clearSession();setSession(null);setProfile(DEFAULT_PROFILE);setDigest(null);setAllDigests([]);setView("auth");
+    if(session&&session.access_token!=="admin")await authApi.signOut(session.access_token);
+    clearSession();
+    try{localStorage.removeItem("mb_admin_auth");}catch{}
+    setSession(null);setProfile(DEFAULT_PROFILE);setDigest(null);setAllDigests([]);setView("auth");
   },[session]);
 
   const viewHistoricDigest=(d)=>{setDigest(d);setAiEnabled(true);setView("digest");};
@@ -707,6 +763,7 @@ export default function App(){
       </div>
     )}
 
+    {view==="admin_login"&&<AdminLogin onSuccess={handleAdminLogin} t={t} dark={dark} setDark={setDark}/>}
     {view==="auth"&&<AuthScreen t={t} dark={dark} setDark={setDark}/>}
     {view==="onboarding"&&<Onboarding profile={profile} setProfile={setProfile} onComplete={onboardingComplete} t={t}/>}
     {view==="dashboard"&&<Dashboard profile={profile} onGenerate={generate} onSettings={()=>setView("settings")} digests={allDigests} onViewDigest={viewHistoricDigest} t={t}/>}
