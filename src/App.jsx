@@ -40,7 +40,7 @@ const fmtTime=(d)=>{try{return new Date(d).toLocaleTimeString("en-US",{hour:"num
 const todayStr=()=>new Date().toLocaleDateString("en-US",{weekday:"long",year:"numeric",month:"long",day:"numeric"});
 const ICONS={Technology:"◈",Business:"◆",Finance:"◇",Health:"✦",Science:"✧",Politics:"◉",Sports:"◎",Entertainment:"✹",AI:"◈",Climate:"❋",Crypto:"◇",Startups:"✦"};
 const getIcon=(s)=>ICONS[s]||ICONS[Object.keys(ICONS).find(k=>s.toLowerCase().includes(k.toLowerCase()))]||"▸";
-const DEFAULT_PROFILE={categories:["Technology","Business"],expertise:[],companies:[],paywalled_sources:[],blocked_sources:[],max_articles_per_section:5,summary_style:"brief"};
+const DEFAULT_PROFILE={categories:["Technology","Business"],expertise:[],companies:[],paywalled_sources:[],blocked_sources:[],max_articles_per_section:5,summary_style:"brief",email_delivery:false,delivery_time:"08:00"};
 const QUICK_CATS=["Technology","Business","Finance","Health","Science","Politics","Sports","AI","Climate","Crypto","Startups","Entertainment"];
 
 const SUMMARY_STYLES=[
@@ -405,12 +405,15 @@ function GeneratingScreen({progress,stage,t}){
 // ═══════════════════════════════════════════
 //  DIGEST VIEW
 // ═══════════════════════════════════════════
-function DigestView({digest,profile,onBack,onSettings,aiEnabled,t}){
+function DigestView({digest,profile,onBack,onSettings,aiEnabled,t,session}){
   const sections=digest.sections||{};
   const sectionKeys=Object.keys(sections);
   const total=Object.values(sections).reduce((a,b)=>a+b.length,0);
   const[copied,setCopied]=useState(false);
+  const[emailing,setEmailing]=useState(false);
+  const[emailSent,setEmailSent]=useState(false);
   const copyDigest=()=>{navigator.clipboard.writeText(digestToText(sections)).then(()=>{setCopied(true);setTimeout(()=>setCopied(false),2000);}).catch(()=>{});};
+  const emailDigest=async()=>{setEmailing(true);try{const r=await fetch('/api/send-digest',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:session?.user?.email,sections:sections,userName:session?.user?.email?.split('@')[0],generatedAt:digest.generated_at||new Date().toISOString()})});if(r.ok){setEmailSent(true);setTimeout(()=>setEmailSent(false),3000);}else{throw new Error('Failed to send');}}catch(e){console.error(e);alert('Failed to send email. Please try again.');}finally{setEmailing(false);}};
   const companyMentions=useMemo(()=>{const counts={};for(const arts of Object.values(sections)){for(const a of arts){const matches=matchesCompany(a,profile.companies);matches.forEach(c=>{counts[c]=(counts[c]||0)+1;});}}return counts;},[sections,profile.companies]);
 
   const SECTION_COLORS_LIGHT=["#c05020","#1a5276","#6b4c2a","#2a6b4c","#6b2a5a","#5a1a6b","#1a6b6b","#6b5a1a"];
@@ -444,6 +447,7 @@ function DigestView({digest,profile,onBack,onSettings,aiEnabled,t}){
         </div>
       </div>
       <div style={{position:"absolute",right:12,top:8,display:"flex",gap:8}}>
+        <button onClick={emailDigest} disabled={emailing} style={{padding:"6px 10px",fontSize:12,background:emailSent?t.successBg:"transparent",color:emailSent?t.successText:t.textSec,border:`1px solid ${t.pillBorder||t.border}`,borderRadius:6,cursor:emailing?"wait":"pointer",fontFamily:t.fb}}>{emailSent?"\u2713 Emailed":emailing?"Sending\u2026":"Email This"}</button>
         <button onClick={copyDigest} style={{padding:"6px 10px",fontSize:12,background:copied?t.successBg:"transparent",color:copied?t.successText:t.textSec,border:`1px solid ${t.pillBorder||t.border}`,borderRadius:6,cursor:"pointer",fontFamily:t.fb}}>{copied?"\u2713 Copied":"Copy"}</button>
         <button onClick={onSettings} style={{padding:"6px 10px",fontSize:12,background:"transparent",color:t.textSec,border:`1px solid ${t.pillBorder||t.border}`,borderRadius:6,cursor:"pointer",fontFamily:t.fb}}>Settings</button>
       </div>
@@ -708,6 +712,6 @@ export default function App(){
     {view==="dashboard"&&<Dashboard profile={profile} onGenerate={generate} onSettings={()=>setView("settings")} digests={allDigests} onViewDigest={viewHistoricDigest} t={t}/>}
     {view==="settings"&&<ProfileSettings profile={profile} setProfile={setProfile} onGenerate={generate} onSave={saveProfileToDb} saving={saving} t={t}/>}
     {view==="generating"&&<GeneratingScreen progress={progress} stage={stage} t={t}/>}
-    {view==="digest"&&digest&&<DigestView digest={digest} profile={profile} onBack={()=>setView("dashboard")} onSettings={()=>setView("settings")} aiEnabled={aiEnabled} t={t}/>}
+    {view==="digest"&&digest&&<DigestView digest={digest} profile={profile} onBack={()=>setView("dashboard")} onSettings={()=>setView("settings")} aiEnabled={aiEnabled} t={t} session={session}/>}
   </div>;
 }
