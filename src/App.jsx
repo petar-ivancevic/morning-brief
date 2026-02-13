@@ -70,7 +70,7 @@ const SUMMARY_STYLES=[
   {key:"scan",label:"Scan",desc:"Titles and sources only. Fastest way to catch up.",icon:"⚡"},
   {key:"brief",label:"Brief",desc:"2\u20134 sentences covering key facts and context.",icon:"◈",isDefault:true},
   {key:"indepth",label:"In-Depth",desc:"4\u20136 sentences with background, implications, and what to watch.",icon:"◆"},
-  {key:"relevance",label:"Relevance",desc:"Brief summary + personalized \"Why this matters\" for your expertise.",icon:"◉"},
+  {key:"relevance",label:"Relevance",desc:"Brief summary + personalized relevance analysis for your expertise.",icon:"◉"},
 ];
 
 function StylePicker({value,setValue,t}){
@@ -394,78 +394,88 @@ function Onboarding({profile,setProfile,onComplete,t}){
 // ═══════════════════════════════════════════
 //  PROFILE SETTINGS
 // ═══════════════════════════════════════════
-function ProfileSettings({profile,setProfile,onGenerate,onSave,saving,t}){
+function ProfileSettings({profile,setProfile,onGenerate,onSave,saving,t,digests,onViewDigest}){
   const up=(k,v)=>setProfile(p=>({...p,[k]:v}));
-  return <div style={{maxWidth:640,margin:"0 auto",animation:"fadeUp 0.5s ease-out"}}>
-    <h2 style={{fontFamily:t.fb,fontSize:22,fontWeight:700,color:t.text,margin:"0 0 6px"}}>Preferences</h2>
-    <p style={{fontSize:14,color:t.textMut,margin:"0 0 28px",fontFamily:t.fb}}>All your settings in one place.</p>
+  const[openSections,setOpenSections]=useState({});
+  const toggle=(s)=>setOpenSections(p=>({...p,[s]:!p[s]}));
 
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:24}}>
-      {/* LEFT COLUMN */}
+  const Section=({title,children,defaultOpen=false})=>{
+    const isOpen=openSections[title]??defaultOpen;
+    return <div style={{marginBottom:16,border:`1px solid ${t.border}`,borderRadius:t.r,overflow:"hidden"}}>
+      <div onClick={()=>toggle(title)} style={{padding:"12px 16px",background:t.bgCard,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <h3 style={{fontSize:14,fontWeight:700,color:t.text,margin:0,fontFamily:t.fb}}>{title}</h3>
+        <span style={{fontSize:18,color:t.textMut}}>{isOpen?"−":"+"}</span>
+      </div>
+      {isOpen&&<div style={{padding:16}}>{children}</div>}
+    </div>;
+  };
+
+  return <div style={{maxWidth:900,margin:"0 auto",animation:"fadeUp 0.5s ease-out"}}>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 300px",gap:24,marginBottom:28}}>
       <div>
-        <h3 style={{fontSize:14,fontWeight:700,color:t.text,marginBottom:12,fontFamily:t.fb}}>Content</h3>
+        <h2 style={{fontFamily:t.fb,fontSize:22,fontWeight:700,color:t.text,margin:"0 0 6px"}}>Preferences</h2>
+        <p style={{fontSize:14,color:t.textMut,margin:"0 0 20px",fontFamily:t.fb}}>Configure your daily brief.</p>
 
-        <div style={{marginBottom:20}}>
-          <label style={{fontSize:13,fontWeight:600,color:t.textSec,display:"block",marginBottom:10,fontFamily:t.fb}}>Topics</label>
+        <Section title="Topics">
           <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10}}>
             {QUICK_CATS.map(c=>{const on=profile.categories.includes(c);return <button key={c} onClick={()=>up("categories",on?profile.categories.filter(x=>x!==c):[...profile.categories,c])} style={{padding:"6px 12px",fontSize:12,fontWeight:on?700:500,background:on?t.tagOnBg:t.tagBg,color:on?t.tagOnText:t.tagText,border:on?"none":`1px solid ${t.pillBorder||t.border}`,borderRadius:t.rPill,cursor:"pointer",boxShadow:on?t.tagOnShadow:"none",fontFamily:t.fb,transition:"all 0.2s"}}>{c}</button>;})}
           </div>
           <TagInput tags={profile.categories.filter(c=>!QUICK_CATS.includes(c))} setTags={custom=>up("categories",[...profile.categories.filter(c=>QUICK_CATS.includes(c)),...custom])} placeholder="Custom topic" t={t}/>
-        </div>
+        </Section>
 
-        <div style={{marginBottom:20}}>
-          <label style={{fontSize:13,fontWeight:600,color:t.textSec,display:"block",marginBottom:8,fontFamily:t.fb}}>Companies <span style={{fontWeight:400,color:t.textMut,fontSize:12}}>(optional)</span></label>
-          <TagInput tags={profile.companies} setTags={v=>up("companies",v)} placeholder="e.g. Microsoft, Stripe" t={t}/>
-        </div>
+        <Section title="Companies & Expertise">
+          <div style={{marginBottom:16}}>
+            <label style={{fontSize:13,fontWeight:600,color:t.textSec,display:"block",marginBottom:8,fontFamily:t.fb}}>Companies <span style={{fontWeight:400,color:t.textMut,fontSize:12}}>(optional)</span></label>
+            <TagInput tags={profile.companies} setTags={v=>up("companies",v)} placeholder="e.g. Microsoft, Stripe" t={t}/>
+          </div>
+          <div>
+            <label style={{fontSize:13,fontWeight:600,color:t.textSec,display:"block",marginBottom:8,fontFamily:t.fb}}>Expertise <span style={{fontWeight:400,color:t.textMut,fontSize:12}}>(optional)</span></label>
+            <TagInput tags={profile.expertise} setTags={v=>up("expertise",v)} placeholder="e.g. Machine Learning, M&A" t={t}/>
+          </div>
+        </Section>
 
-        <div style={{marginBottom:20}}>
-          <label style={{fontSize:13,fontWeight:600,color:t.textSec,display:"block",marginBottom:8,fontFamily:t.fb}}>Expertise <span style={{fontWeight:400,color:t.textMut,fontSize:12}}>(optional)</span></label>
-          <TagInput tags={profile.expertise} setTags={v=>up("expertise",v)} placeholder="e.g. Machine Learning, M&A" t={t}/>
-        </div>
+        <Section title="Summary Style & Format">
+          <div style={{marginBottom:16}}>
+            <label style={{fontSize:13,fontWeight:600,color:t.textSec,display:"block",marginBottom:8,fontFamily:t.fb}}>Summary Style</label>
+            <StylePicker value={profile.summary_style||"brief"} setValue={v=>up("summary_style",v)} t={t}/>
+          </div>
+          <div>
+            <label style={{fontSize:13,fontWeight:600,color:t.textSec,display:"block",marginBottom:8,fontFamily:t.fb}}>Articles per section: <span style={{color:t.accentSolid}}>{profile.max_articles_per_section}</span></label>
+            <input type="range" min={2} max={10} value={profile.max_articles_per_section} onChange={e=>up("max_articles_per_section",+e.target.value)} style={{width:"100%",accentColor:t.accentSolid}}/>
+          </div>
+        </Section>
 
-        <div style={{marginBottom:20}}>
-          <label style={{fontSize:13,fontWeight:600,color:t.textSec,display:"block",marginBottom:8,fontFamily:t.fb}}>Summary Style</label>
-          <StylePicker value={profile.summary_style||"brief"} setValue={v=>up("summary_style",v)} t={t}/>
-        </div>
-
-        <div>
-          <label style={{fontSize:13,fontWeight:600,color:t.textSec,display:"block",marginBottom:8,fontFamily:t.fb}}>Articles per section: <span style={{color:t.accentSolid}}>{profile.max_articles_per_section}</span></label>
-          <input type="range" min={2} max={10} value={profile.max_articles_per_section} onChange={e=>up("max_articles_per_section",+e.target.value)} style={{width:"100%",accentColor:t.accentSolid}}/>
-        </div>
+        <Section title="Sources">
+          <div style={{marginBottom:16}}>
+            <label style={{fontSize:13,fontWeight:600,color:t.textSec,display:"block",marginBottom:8,fontFamily:t.fb}}>Paywalled sources</label>
+            <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+              {PAYWALLED.slice(0,8).map(d=>{const on=(profile.paywalled_sources||[]).includes(d);return <button key={d} onClick={()=>setProfile(p=>({...p,paywalled_sources:on?(p.paywalled_sources||[]).filter(x=>x!==d):[...(p.paywalled_sources||[]),d]}))} style={{padding:"5px 10px",fontSize:11,fontWeight:on?700:500,background:on?t.tagOnBg:t.tagBg,color:on?t.tagOnText:t.tagText,border:on?"none":`1px solid ${t.pillBorder||t.border}`,borderRadius:t.rPill,cursor:"pointer",fontFamily:t.fb,transition:"all 0.15s"}}>{PAYWALLED_DISPLAY[d]?.split(' ')[0]||d.split('.')[0]}</button>;})}
+            </div>
+          </div>
+          <div>
+            <label style={{fontSize:13,fontWeight:600,color:t.textSec,display:"block",marginBottom:8,fontFamily:t.fb}}>Blocked sources</label>
+            <TagInput tags={profile.blocked_sources||[]} setTags={v=>setProfile(p=>({...p,blocked_sources:v}))} placeholder="e.g. foxnews.com" t={t}/>
+          </div>
+        </Section>
       </div>
 
-      {/* RIGHT COLUMN */}
-      <div>
-        <h3 style={{fontSize:14,fontWeight:700,color:t.text,marginBottom:12,fontFamily:t.fb}}>Sources & Delivery</h3>
-
-        <div style={{marginBottom:20}}>
-          <label style={{fontSize:13,fontWeight:600,color:t.textSec,display:"block",marginBottom:8,fontFamily:t.fb}}>Paywalled sources</label>
-          <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:8}}>
-            {PAYWALLED.slice(0,6).map(d=>{const on=(profile.paywalled_sources||[]).includes(d);return <button key={d} onClick={()=>setProfile(p=>({...p,paywalled_sources:on?(p.paywalled_sources||[]).filter(x=>x!==d):[...(p.paywalled_sources||[]),d]}))} style={{padding:"5px 10px",fontSize:11,fontWeight:on?700:500,background:on?t.tagOnBg:t.tagBg,color:on?t.tagOnText:t.tagText,border:on?"none":`1px solid ${t.pillBorder||t.border}`,borderRadius:t.rPill,cursor:"pointer",fontFamily:t.fb,transition:"all 0.15s"}}>{PAYWALLED_DISPLAY[d]?.split(' ')[0]||d.split('.')[0]}</button>;})}
-          </div>
-        </div>
-
-        <div style={{marginBottom:20}}>
-          <label style={{fontSize:13,fontWeight:600,color:t.textSec,display:"block",marginBottom:8,fontFamily:t.fb}}>Blocked sources</label>
-          <TagInput tags={profile.blocked_sources||[]} setTags={v=>setProfile(p=>({...p,blocked_sources:v}))} placeholder="e.g. foxnews.com" t={t}/>
-        </div>
-
-        <div style={{padding:14,background:t.bgCard,border:`1px solid ${t.border}`,borderRadius:t.r,marginBottom:16}}>
+      <div style={{position:"sticky",top:20,alignSelf:"start"}}>
+        <div style={{padding:16,background:t.bgCard,border:`1px solid ${t.border}`,borderRadius:t.r,marginBottom:16}}>
+          <h3 style={{fontSize:14,fontWeight:700,color:t.text,margin:"0 0 12px",fontFamily:t.fb}}>Email Delivery</h3>
           <div style={{marginBottom:12}}>
-            <Toggle value={profile.email_delivery||false} onChange={v=>up("email_delivery",v)} label="Enable daily email delivery" t={t}/>
+            <Toggle value={profile.email_delivery||false} onChange={v=>up("email_delivery",v)} label="Enable daily delivery" t={t}/>
           </div>
           {(profile.email_delivery||false)&&<div>
-            <label style={{fontSize:12,fontWeight:600,color:t.textSec,display:"block",marginBottom:8,fontFamily:t.fb}}>Delivery time (your local time)</label>
+            <label style={{fontSize:12,fontWeight:600,color:t.textSec,display:"block",marginBottom:8,fontFamily:t.fb}}>Delivery time (local)</label>
             <input type="time" value={profile.delivery_time||"08:00"} onChange={e=>up("delivery_time",e.target.value)} style={{width:"100%",padding:"8px 12px",fontSize:14,border:`2px solid ${t.pillBorder||t.border}`,borderRadius:t.r,background:t.bgInput,color:t.text,outline:"none",fontFamily:t.fb,boxSizing:"border-box"}}/>
           </div>}
         </div>
+        <button onClick={onGenerate} disabled={profile.categories.length===0} style={{width:"100%",padding:"13px 0",fontSize:14,fontWeight:700,background:profile.categories.length>0?t.accent:t.bgAlt,color:profile.categories.length>0?t.accentText:t.textFaint,border:"none",borderRadius:t.r,cursor:profile.categories.length>0?"pointer":"not-allowed",boxShadow:profile.categories.length>0?t.accentShadow:"none",fontFamily:t.fb,transition:"all 0.2s",marginBottom:10}}>Generate Brief Now</button>
+        <button onClick={onSave} disabled={saving} style={{width:"100%",padding:"12px 0",fontSize:13,fontWeight:600,background:"transparent",color:t.textSec,border:`2px solid ${t.pillBorder||t.border}`,borderRadius:t.r,cursor:"pointer",fontFamily:t.fb}}>{saving?"Saving\u2026":"Save Preferences"}</button>
       </div>
     </div>
 
-    <div style={{display:"flex",gap:10,marginTop:28}}>
-      <button onClick={onSave} disabled={saving} style={{padding:"12px 24px",fontSize:13,fontWeight:600,background:"transparent",color:t.textSec,border:`2px solid ${t.pillBorder||t.border}`,borderRadius:t.r,cursor:"pointer",fontFamily:t.fb}}>{saving?"Saving\u2026":"Save Preferences"}</button>
-      <button onClick={onGenerate} disabled={profile.categories.length===0} style={{flex:1,padding:"13px 0",fontSize:14,fontWeight:700,background:profile.categories.length>0?t.accent:t.bgAlt,color:profile.categories.length>0?t.accentText:t.textFaint,border:"none",borderRadius:t.r,cursor:profile.categories.length>0?"pointer":"not-allowed",boxShadow:profile.categories.length>0?t.accentShadow:"none",fontFamily:t.fb,transition:"all 0.2s"}}>Generate Brief Now</button>
-    </div>
+    {digests&&digests.length>0&&<DigestHistory digests={digests} onView={onViewDigest} t={t}/>}
   </div>;
 }
 
@@ -597,7 +607,10 @@ function DigestView({digest,profile,onBack,onSettings,aiEnabled,t,session}){
       return <div style={{margin:"20px 0 28px",paddingBottom:18,borderBottom:`1px solid ${t.border}`}}>
         {lc.length>0&&<div style={{fontSize:11,fontWeight:700,color:t.alertText,textTransform:"uppercase",marginBottom:6}}>{"\u26a1"} {lc[0]}</div>}
         <a href={leadArticle.link} target="_blank" rel="noopener noreferrer" style={{fontFamily:"'Playfair Display',serif",fontSize:26,fontWeight:500,color:titleColor,marginBottom:12,textDecoration:"none",display:"block"}}>{leadArticle.title}</a>
-        {leadArticle.summary&&<div style={{fontFamily:`'Source Sans 3',${t.fb},sans-serif`,fontSize:15,color:summaryColor,lineHeight:1.7,marginBottom:12}}>{leadArticle.summary}</div>}
+        {leadArticle.relevance?<div style={{fontFamily:`'Source Sans 3',${t.fb},sans-serif`,fontSize:15,color:summaryColor,lineHeight:1.7,marginBottom:12}}>
+          <div style={{marginBottom:10}}><strong>Summary</strong><br/>{leadArticle.summary}</div>
+          <div><strong>Relevance</strong><br/>{leadArticle.relevance}</div>
+        </div>:leadArticle.summary&&<div style={{fontFamily:`'Source Sans 3',${t.fb},sans-serif`,fontSize:15,color:summaryColor,lineHeight:1.7,marginBottom:12}}>{leadArticle.summary}</div>}
         <div style={{fontSize:12,color:metaColor}}>{leadArticle.source}{leadArticle.pubDate?` \u00b7 ${fmtDate(leadArticle.pubDate)}`:""}{isQualitySource(leadArticle.link)?<span style={{marginLeft:8,color:t.qualityText}}>{"\u2726"} Quality source</span>:""}{isPaywalled(leadArticle.link)?<span style={{marginLeft:8,color:t.paywallText}}>{"\u25c6"} paywall</span>:""}</div>
       </div>;
     })()}
@@ -612,7 +625,10 @@ function DigestView({digest,profile,onBack,onSettings,aiEnabled,t,session}){
             return <div key={ai} style={{padding:"8px 6px",borderBottom:`1px solid ${t.border}`}}>
               {companies.length>0&&<div style={{fontSize:11,fontWeight:700,color:t.alertText,textTransform:"uppercase",marginBottom:6}}>{"\u26a1"} {companies[0]}</div>}
               <a href={a.link} target="_blank" rel="noopener noreferrer" style={{fontFamily:"'Playfair Display',serif",fontSize:15,fontWeight:500,color:titleColor,marginBottom:6,textDecoration:"none",display:"block"}}>{a.title}</a>
-              {a.summary&&<div style={{fontFamily:`'Source Sans 3',${t.fb},sans-serif`,fontSize:13,color:summaryColor,lineHeight:1.7,marginBottom:8}}>{a.summary}</div>}
+              {a.relevance?<div style={{fontFamily:`'Source Sans 3',${t.fb},sans-serif`,fontSize:13,color:summaryColor,lineHeight:1.7,marginBottom:8}}>
+                <div style={{marginBottom:8}}><strong>Summary</strong><br/>{a.summary}</div>
+                <div><strong>Relevance</strong><br/>{a.relevance}</div>
+              </div>:a.summary&&<div style={{fontFamily:`'Source Sans 3',${t.fb},sans-serif`,fontSize:13,color:summaryColor,lineHeight:1.7,marginBottom:8}}>{a.summary}</div>}
               <div style={{fontSize:10,color:metaColor}}>{a.source}{a.pubDate?` \u00b7 ${fmtDate(a.pubDate)}`:""}{isQualitySource(a.link)?<span style={{marginLeft:8,color:t.qualityText}}>{"\u2726"}</span>:""}{isPaywalled(a.link)?<span style={{marginLeft:8,color:t.paywallText}}>{"\u25c6"}</span>:""}</div>
             </div>;
           })}
@@ -885,7 +901,7 @@ export default function App(){
     {view==="auth"&&<AuthScreen onSuccess={handleAuthSuccess} t={t} dark={dark} setDark={setDark}/>}
     {view==="onboarding"&&<Onboarding profile={profile} setProfile={setProfile} onComplete={onboardingComplete} t={t}/>}
     {view==="dashboard"&&<Dashboard profile={profile} onGenerate={generate} onSettings={()=>setView("settings")} digests={allDigests} onViewDigest={viewHistoricDigest} t={t}/>}
-    {view==="settings"&&<ProfileSettings profile={profile} setProfile={setProfile} onGenerate={generate} onSave={saveProfileToDb} saving={saving} t={t}/>}
+    {view==="settings"&&<ProfileSettings profile={profile} setProfile={setProfile} onGenerate={generate} onSave={saveProfileToDb} saving={saving} t={t} digests={allDigests} onViewDigest={viewHistoricDigest}/>}
     {view==="generating"&&<GeneratingScreen progress={progress} stage={stage} t={t}/>}
     {view==="digest"&&digest&&<DigestView digest={digest} profile={profile} onBack={()=>setView("dashboard")} onSettings={()=>setView("settings")} aiEnabled={aiEnabled} t={t} session={session}/>}
   </div>;
