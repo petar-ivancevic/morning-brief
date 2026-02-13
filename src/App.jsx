@@ -345,15 +345,16 @@ function Onboarding({profile,setProfile,onComplete,t}){
         <div style={{marginTop:16}}><TagInput tags={profile.categories.filter(c=>!QUICK_CATS.includes(c))} setTags={custom=>up("categories",[...profile.categories.filter(c=>QUICK_CATS.includes(c)),...custom])} placeholder="Add custom topic\u2026" t={t}/></div>
       </div>
     )},
-    {title:"Add companies & expertise",sub:"Personalize your brief further (optional).",content:(
+    {title:"Add companies & role",sub:"Personalize your brief further (optional).",content:(
       <div>
         <div style={{marginBottom:18}}>
           <label style={{fontSize:13,fontWeight:700,color:t.textSec,display:"block",marginBottom:8,fontFamily:t.fb}}>Companies <span style={{fontWeight:400,color:t.textMut}}>(optional)</span></label>
           <TagInput tags={profile.companies||[]} setTags={v=>up("companies",v)} placeholder="e.g. Microsoft, Stripe" t={t}/>
         </div>
         <div>
-          <label style={{fontSize:13,fontWeight:700,color:t.textSec,display:"block",marginBottom:8,fontFamily:t.fb}}>Expertise <span style={{fontWeight:400,color:t.textMut}}>(optional)</span></label>
-          <TagInput tags={profile.expertise||[]} setTags={v=>up("expertise",v)} placeholder="e.g. Machine Learning, M&A" t={t}/>
+          <label style={{fontSize:13,fontWeight:700,color:t.textSec,display:"block",marginBottom:8,fontFamily:t.fb}}>Role / Expertise <span style={{fontWeight:400,color:t.textMut}}>(optional)</span></label>
+          <p style={{fontSize:12,color:t.textMut,margin:"0 0 8px",lineHeight:1.5,fontFamily:t.fb}}>Used by Relevance mode to explain why articles matter for your role</p>
+          <TagInput tags={profile.expertise||[]} setTags={v=>up("expertise",v)} placeholder="e.g. GRC Manager, Auditor, Compliance" t={t}/>
         </div>
       </div>
     )},
@@ -404,7 +405,7 @@ function ProfileSettings({profile,setProfile,onGenerate,onSave,saving,t,digests,
     return <div style={{marginBottom:16,border:`1px solid ${t.border}`,borderRadius:t.r,overflow:"hidden"}}>
       <div onClick={()=>toggle(title)} style={{padding:"12px 16px",background:t.bgCard,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
         <h3 style={{fontSize:14,fontWeight:700,color:t.text,margin:0,fontFamily:t.fb}}>{title}</h3>
-        <span style={{fontSize:18,color:t.textMut}}>{isOpen?"−":"+"}</span>
+        <span style={{fontSize:14,color:t.textMut}}>{isOpen?"▼":"▶"}</span>
       </div>
       {isOpen&&<div style={{padding:16}}>{children}</div>}
     </div>;
@@ -423,14 +424,15 @@ function ProfileSettings({profile,setProfile,onGenerate,onSave,saving,t,digests,
           <TagInput tags={profile.categories.filter(c=>!QUICK_CATS.includes(c))} setTags={custom=>up("categories",[...profile.categories.filter(c=>QUICK_CATS.includes(c)),...custom])} placeholder="Custom topic" t={t}/>
         </Section>
 
-        <Section title="Companies & Expertise">
+        <Section title="Companies & Role">
           <div style={{marginBottom:16}}>
             <label style={{fontSize:13,fontWeight:600,color:t.textSec,display:"block",marginBottom:8,fontFamily:t.fb}}>Companies <span style={{fontWeight:400,color:t.textMut,fontSize:12}}>(optional)</span></label>
             <TagInput tags={profile.companies} setTags={v=>up("companies",v)} placeholder="e.g. Microsoft, Stripe" t={t}/>
           </div>
           <div>
-            <label style={{fontSize:13,fontWeight:600,color:t.textSec,display:"block",marginBottom:8,fontFamily:t.fb}}>Expertise <span style={{fontWeight:400,color:t.textMut,fontSize:12}}>(optional)</span></label>
-            <TagInput tags={profile.expertise} setTags={v=>up("expertise",v)} placeholder="e.g. Machine Learning, M&A" t={t}/>
+            <label style={{fontSize:13,fontWeight:600,color:t.textSec,display:"block",marginBottom:8,fontFamily:t.fb}}>Role / Expertise <span style={{fontWeight:400,color:t.textMut,fontSize:12}}>(optional)</span></label>
+            <p style={{fontSize:12,color:t.textMut,margin:"0 0 8px",lineHeight:1.5,fontFamily:t.fb}}>Used by Relevance mode to personalize "why this matters" for your role</p>
+            <TagInput tags={profile.expertise} setTags={v=>up("expertise",v)} placeholder="e.g. GRC Manager, Auditor, Compliance Officer" t={t}/>
           </div>
         </Section>
 

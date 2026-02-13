@@ -28,11 +28,11 @@ export default async function handler(req, res) {
     const styleInstructions = {
       brief: "Provide a 2-4 sentence summary covering key facts and context.",
       indepth: "Provide a 4-6 sentence summary with background, implications, and what to watch.",
-      relevance: "Provide a brief summary plus a personalized 'Why this matters' section based on the user's expertise."
+      relevance: "Provide a JSON response with two fields: 'summary' (2-3 sentence summary of the article) and 'relevance' (2-3 sentences explaining why this matters to someone in the user's role/expertise)."
     };
 
     const instruction = styleInstructions[style] || styleInstructions.brief;
-    const expertiseText = expertise.length > 0 ? `\nUser expertise: ${expertise.join(', ')}` : '';
+    const expertiseText = expertise.length > 0 ? `\nUser's role/expertise: ${expertise.join(', ')}` : '';
     const companiesText = companies.length > 0 ? `\nTracking companies: ${companies.join(', ')}` : '';
 
     // Process articles in batches to avoid rate limits
@@ -60,7 +60,9 @@ Please provide a clear, concise summary. If this article is relevant to the user
               messages: [
                 {
                   role: "system",
-                  content: "You are a professional news summarizer. Provide clear, concise, and accurate summaries."
+                  content: style === 'relevance'
+                    ? "You are a professional news summarizer. Return your response as valid JSON with 'summary' and 'relevance' fields."
+                    : "You are a professional news summarizer. Provide clear, concise, and accurate summaries."
                 },
                 {
                   role: "user",
@@ -68,12 +70,34 @@ Please provide a clear, concise summary. If this article is relevant to the user
                 }
               ],
               max_tokens: style === 'brief' ? 150 : 250,
-              temperature: 0.3
+              temperature: 0.3,
+              response_format: style === 'relevance' ? { type: "json_object" } : undefined
             });
+
+            const content = response.choices[0].message.content.trim();
+
+            // For relevance mode, parse JSON response
+            if (style === 'relevance') {
+              try {
+                const parsed = JSON.parse(content);
+                return {
+                  index,
+                  summary: parsed.summary || content,
+                  relevance: parsed.relevance || null
+                };
+              } catch (e) {
+                // Fallback if JSON parsing fails
+                return {
+                  index,
+                  summary: content,
+                  relevance: null
+                };
+              }
+            }
 
             return {
               index,
-              summary: response.choices[0].message.content.trim(),
+              summary: content,
               relevance: null
             };
           } catch (error) {

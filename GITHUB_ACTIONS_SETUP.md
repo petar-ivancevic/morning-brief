@@ -82,7 +82,6 @@ The workflow runs **every hour at minute 0**:
 Your cron endpoint checks if it's the user's delivery time and sends accordingly.
 
 ---
-
 ## 🔧 How It Works
 
 ```mermaid
