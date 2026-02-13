@@ -581,6 +581,8 @@ function DigestView({digest,profile,onBack,onSettings,aiEnabled,t,session}){
     <style>{`
       .mb-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
       @media(max-width:600px){.mb-grid{grid-template-columns:1fr;}}
+      .article-link{text-decoration:underline;text-decoration-color:${t.border};text-decoration-thickness:1px;text-underline-offset:3px;transition:all 0.2s;}
+      .article-link:hover{color:${t.linkH};text-decoration-color:${t.linkH};text-decoration-thickness:2px;}
     `}</style>
 
     <div style={{position:"relative"}}>
@@ -608,7 +610,7 @@ function DigestView({digest,profile,onBack,onSettings,aiEnabled,t,session}){
       const lc=matchesCompany(leadArticle,profile.companies);
       return <div style={{margin:"20px 0 28px",paddingBottom:18,borderBottom:`1px solid ${t.border}`}}>
         {lc.length>0&&<div style={{fontSize:11,fontWeight:700,color:t.alertText,textTransform:"uppercase",marginBottom:6}}>{"\u26a1"} {lc[0]}</div>}
-        <a href={leadArticle.link} target="_blank" rel="noopener noreferrer" style={{fontFamily:"'Playfair Display',serif",fontSize:26,fontWeight:500,color:titleColor,marginBottom:12,textDecoration:"none",display:"block"}}>{leadArticle.title}</a>
+        <a href={leadArticle.link} target="_blank" rel="noopener noreferrer" className="article-link" style={{fontFamily:"'Playfair Display',serif",fontSize:26,fontWeight:500,color:titleColor,marginBottom:12,display:"block"}}>{leadArticle.title}</a>
         {leadArticle.relevance?<div style={{fontFamily:`'Source Sans 3',${t.fb},sans-serif`,fontSize:15,color:summaryColor,lineHeight:1.7,marginBottom:12}}>
           <div style={{marginBottom:10}}><strong>Summary</strong><br/>{leadArticle.summary}</div>
           <div><strong>Relevance</strong><br/>{leadArticle.relevance}</div>
@@ -626,7 +628,7 @@ function DigestView({digest,profile,onBack,onSettings,aiEnabled,t,session}){
             const companies=matchesCompany(a,profile.companies);
             return <div key={ai} style={{padding:"8px 6px",borderBottom:`1px solid ${t.border}`}}>
               {companies.length>0&&<div style={{fontSize:11,fontWeight:700,color:t.alertText,textTransform:"uppercase",marginBottom:6}}>{"\u26a1"} {companies[0]}</div>}
-              <a href={a.link} target="_blank" rel="noopener noreferrer" style={{fontFamily:"'Playfair Display',serif",fontSize:15,fontWeight:500,color:titleColor,marginBottom:6,textDecoration:"none",display:"block"}}>{a.title}</a>
+              <a href={a.link} target="_blank" rel="noopener noreferrer" className="article-link" style={{fontFamily:"'Playfair Display',serif",fontSize:15,fontWeight:500,color:titleColor,marginBottom:6,display:"block"}}>{a.title}</a>
               {a.relevance?<div style={{fontFamily:`'Source Sans 3',${t.fb},sans-serif`,fontSize:13,color:summaryColor,lineHeight:1.7,marginBottom:8}}>
                 <div style={{marginBottom:8}}><strong>Summary</strong><br/>{a.summary}</div>
                 <div><strong>Relevance</strong><br/>{a.relevance}</div>
