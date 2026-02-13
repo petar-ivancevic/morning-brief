@@ -757,7 +757,7 @@ export default function App(){
     init();
   },[loadUserData,handleAdminLogin,isAdminRoute]);
 
-  useEffect(()=>{if(view===null&&session){setView(isNewUser?"onboarding":"dashboard");}},[view,session,isNewUser]);
+  useEffect(()=>{if(view===null&&session){setView(isNewUser?"settings":"dashboard");}},[view,session,isNewUser]);
 
   const saveProfileToDb=useCallback(async()=>{
     if(!session)return;setSaving(true);
