@@ -100,7 +100,16 @@ function generateEmailContent(sections, generatedAt) {
                         <h3 style="font-family: Georgia, serif; font-size: 18px; font-weight: 600; color: #1a1714; margin: 0 0 12px 0; line-height: 1.4;">
                           <a href="${article.link}" target="_blank" style="color: #1a1714; text-decoration: none;">${article.title}</a>
                         </h3>
-                        ${article.summary ? `<p style="font-size: 15px; color: #1a1714; margin: 0 0 12px 0; line-height: 1.7;">${article.summary}</p>` : ''}
+                        ${article.relevance ? `
+                          <p style="font-size: 15px; color: #1a1714; margin: 0 0 12px 0; line-height: 1.7;">
+                            <strong>Summary</strong><br/>
+                            ${article.summary}
+                          </p>
+                          <p style="font-size: 15px; color: #1a1714; margin: 0 0 12px 0; line-height: 1.7;">
+                            <strong>Relevance</strong><br/>
+                            ${article.relevance}
+                          </p>
+                        ` : article.summary ? `<p style="font-size: 15px; color: #1a1714; margin: 0 0 12px 0; line-height: 1.7;">${article.summary}</p>` : ''}
                         <p style="font-size: 12px; color: #5c554c; margin: 0; line-height: 1.6;">
                           ${article.source} · ${formatArticleDate(article.pubDate)}
                           ${isQualitySource(article.link) ? '<span style="display: inline-block; padding: 3px 8px; margin-left: 8px; border-radius: 12px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; background: #e8f5e9; color: #2a8c3e; border: 1px solid #a5d6a7;">Quality Source</span>' : ''}
@@ -152,17 +161,22 @@ ${sectionKeys.map(sectionName => {
 ${sectionName.toUpperCase()}
 ${'-'.repeat(50)}
 
-${articles.map((article, idx) => `
+${articles.map((article, idx) => {
+  const summaryText = article.relevance
+    ? `Summary: ${article.summary}\n\n   Relevance: ${article.relevance}`
+    : (article.summary || 'Read the full article for more details.');
+  return `
 ${idx + 1}. ${article.title}
 
-   ${article.summary || 'Read the full article for more details.'}
+   ${summaryText}
 
    Source: ${article.source}
    Published: ${formatArticleDate(article.pubDate)}
    ${isQualitySource(article.link) ? '✓ Quality Source  ' : ''}${isPaywalled(article.link) ? '⚠ Paywall' : ''}
 
    Read more: ${article.link}
-`).join('\n')}
+`;
+}).join('\n')}
   `;
 }).join('\n')}
 
