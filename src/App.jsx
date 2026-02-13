@@ -9,7 +9,30 @@ const SB_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsIn
 const hdrs = (token) => ({ apikey:SB_KEY, Authorization:`Bearer ${token||SB_KEY}`, "Content-Type":"application/json", Prefer:"return=representation" });
 
 const authApi = {
-  async sendMagicLink(email) { const r = await fetch(`${SB_URL}/auth/v1/magiclink`,{method:"POST",headers:{apikey:SB_KEY,"Content-Type":"application/json"},body:JSON.stringify({email})}); if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.msg||e.error_description||"Failed");} },
+  async signUp(email, password) {
+    const r = await fetch(`${SB_URL}/auth/v1/signup`, {
+      method: "POST",
+      headers: { apikey: SB_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password })
+    });
+    if (!r.ok) {
+      const e = await r.json().catch(() => ({}));
+      throw new Error(e.msg || e.error_description || "Signup failed");
+    }
+    return r.json();
+  },
+  async signInWithPassword(email, password) {
+    const r = await fetch(`${SB_URL}/auth/v1/token?grant_type=password`, {
+      method: "POST",
+      headers: { apikey: SB_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password })
+    });
+    if (!r.ok) {
+      const e = await r.json().catch(() => ({}));
+      throw new Error(e.msg || e.error_description || "Sign in failed");
+    }
+    return r.json();
+  },
   async refreshSession(rt) { const r=await fetch(`${SB_URL}/auth/v1/token?grant_type=refresh_token`,{method:"POST",headers:{apikey:SB_KEY,"Content-Type":"application/json"},body:JSON.stringify({refresh_token:rt})}); return r.ok?r.json():null; },
   async getUser(at) { const r=await fetch(`${SB_URL}/auth/v1/user`,{headers:{apikey:SB_KEY,Authorization:`Bearer ${at}`}}); return r.ok?r.json():null; },
   async signOut(t) { await fetch(`${SB_URL}/auth/v1/logout`,{method:"POST",headers:{apikey:SB_KEY,Authorization:`Bearer ${t}`}}).catch(()=>{}); },
@@ -235,45 +258,41 @@ function AdminLogin({onSuccess,t,dark,setDark}){
 // ═══════════════════════════════════════════
 //  AUTH SCREEN
 // ═══════════════════════════════════════════
-function AuthScreen({t,dark,setDark}){
+function AuthScreen({t,dark,setDark,onSuccess}){
+  const[mode,setMode]=useState("signin"); // "signin" or "signup"
   const[email,setEmail]=useState("");
-  const[sent,setSent]=useState(false);
+  const[password,setPassword]=useState("");
   const[busy,setBusy]=useState(false);
   const[err,setErr]=useState("");
-  const send=async()=>{
-    if(!email) return;
-    const key = `mb_magic_${email.toLowerCase()}`;
-    const COOLDOWN = 1000 * 60 * 2; // 2 minutes client-side cooldown
-    try{
-      const last = parseInt(localStorage.getItem(key) || "0", 10) || 0;
-      const now = Date.now();
-      const delta = now - last;
-      if(last && delta < COOLDOWN){
-        const secs = Math.ceil((COOLDOWN - delta) / 1000);
-        setErr(`Please wait ${secs}s before requesting another sign-in link.`);
-        return;
-      }
-    }catch{}
 
+  const handleSubmit=async()=>{
+    if(!email || !password) return;
     setBusy(true);
     setErr("");
     try{
-      await authApi.sendMagicLink(email);
-      // mark timestamp to avoid immediate re-sends
-      try{ localStorage.setItem(key, String(Date.now())); }catch{}
-      setSent(true);
+      let data;
+      if(mode==="signup"){
+        data = await authApi.signUp(email, password);
+      }else{
+        data = await authApi.signInWithPassword(email, password);
+      }
+      if(data.access_token && data.user){
+        saveSession({access_token:data.access_token,refresh_token:data.refresh_token||data.access_token,user:data.user});
+        onSuccess(data);
+      }else{
+        throw new Error("Authentication failed");
+      }
     }catch(e){
-      // friendly messages for rate-limit like responses
-      const msg = String(e?.message || e || "Failed to send link");
-      if(/rate/i.test(msg) || /limit/i.test(msg)){
-        setErr("Email rate limit exceeded. Please wait a few minutes and try again.");
-        try{ localStorage.setItem(key, String(Date.now())); }catch{}
-      } else {
+      const msg = String(e?.message || e || "Failed");
+      if(msg.toLowerCase().includes("invalid")){
+        setErr(mode==="signin"?"Invalid email or password":"Email already registered");
+      }else{
         setErr(msg);
       }
     }
     setBusy(false);
   };
+
   return <div style={{maxWidth:400,margin:"0 auto",paddingTop:60,animation:"fadeUp 0.6s ease-out"}}>
     <div style={{display:"flex",justifyContent:"flex-end",marginBottom:24}}><ThemeToggle dark={dark} setDark={setDark} t={t}/></div>
     <div style={{textAlign:"center",marginBottom:40}}>
@@ -281,18 +300,24 @@ function AuthScreen({t,dark,setDark}){
       <h1 style={{fontFamily:t.fd,fontSize:26,fontWeight:700,color:t.text,margin:"0 0 8px"}}>Morning Brief</h1>
       <p style={{color:t.textMut,fontSize:14,margin:0,lineHeight:1.6,fontFamily:t.fb}}>AI-curated news, delivered daily.</p>
     </div>
-    {!sent?<>
-      <label style={{fontSize:13,fontWeight:700,color:t.textSec,display:"block",marginBottom:8,fontFamily:t.fb}}>Email address</label>
-      <input value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={e=>e.key==="Enter"&&send()} placeholder="you@company.com" type="email" style={{width:"100%",padding:"13px 16px",fontSize:15,border:`2px solid ${t.pillBorder||t.border}`,borderRadius:t.r,background:t.bgInput,color:t.text,outline:"none",fontFamily:t.fb,boxSizing:"border-box",marginBottom:16,transition:"border-color 0.2s"}}/>
-      <button onClick={send} disabled={busy||!email} style={{width:"100%",padding:"14px 0",fontSize:14,fontWeight:700,background:t.accent,color:t.accentText,border:"none",borderRadius:t.r,cursor:busy||!email?"not-allowed":"pointer",boxShadow:t.accentShadow,fontFamily:t.fb,opacity:busy||!email?0.6:1,transition:"all 0.2s"}}>{busy?"Sending\u2026":"Send Magic Link"}</button>
-    </>:<div style={{textAlign:"center"}}>
-      <div style={{background:t.successBg,border:`1px solid ${t.successBorder}`,borderRadius:t.r,padding:"24px",marginBottom:24,color:t.successText,fontSize:14,lineHeight:1.6,fontFamily:t.fb}}>
-        <div style={{fontSize:32,marginBottom:12}}>{"\u2709"}</div>
-        Check <strong>{email}</strong> for a sign-in link.
-        <div style={{marginTop:8,fontSize:13,color:t.textMut}}>Click the link in the email to continue.</div>
-      </div>
-      <button onClick={()=>{setSent(false);setEmail("");}} style={{width:"100%",padding:"12px 0",fontSize:13,fontWeight:600,background:"transparent",color:t.textSec,border:`2px solid ${t.pillBorder||t.border}`,borderRadius:t.r,cursor:"pointer",fontFamily:t.fb}}>Use different email</button>
-    </div>}
+
+    <label style={{fontSize:13,fontWeight:700,color:t.textSec,display:"block",marginBottom:8,fontFamily:t.fb}}>Email address</label>
+    <input value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleSubmit()} placeholder="you@company.com" type="email" autoComplete="email" style={{width:"100%",padding:"13px 16px",fontSize:15,border:`2px solid ${t.pillBorder||t.border}`,borderRadius:t.r,background:t.bgInput,color:t.text,outline:"none",fontFamily:t.fb,boxSizing:"border-box",marginBottom:16,transition:"border-color 0.2s"}}/>
+
+    <label style={{fontSize:13,fontWeight:700,color:t.textSec,display:"block",marginBottom:8,fontFamily:t.fb}}>Password</label>
+    <input value={password} onChange={e=>setPassword(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleSubmit()} placeholder={mode==="signup"?"Create a password":"Enter your password"} type="password" autoComplete={mode==="signup"?"new-password":"current-password"} style={{width:"100%",padding:"13px 16px",fontSize:15,border:`2px solid ${t.pillBorder||t.border}`,borderRadius:t.r,background:t.bgInput,color:t.text,outline:"none",fontFamily:t.fb,boxSizing:"border-box",marginBottom:16,transition:"border-color 0.2s"}}/>
+
+    <button onClick={handleSubmit} disabled={busy||!email||!password} style={{width:"100%",padding:"14px 0",fontSize:14,fontWeight:700,background:t.accent,color:t.accentText,border:"none",borderRadius:t.r,cursor:busy||!email||!password?"not-allowed":"pointer",boxShadow:t.accentShadow,fontFamily:t.fb,opacity:busy||!email||!password?0.6:1,transition:"all 0.2s",marginBottom:16}}>
+      {busy?(mode==="signup"?"Creating account…":"Signing in…"):(mode==="signup"?"Create Account":"Sign In")}
+    </button>
+
+    <div style={{textAlign:"center",fontSize:13,color:t.textMut,fontFamily:t.fb}}>
+      {mode==="signin"?"Don't have an account? ":"Already have an account? "}
+      <button onClick={()=>{setMode(mode==="signin"?"signup":"signin");setErr("");}} style={{background:"none",border:"none",color:t.accentSolid,cursor:"pointer",fontWeight:600,fontFamily:t.fb,padding:0,textDecoration:"underline"}}>
+        {mode==="signin"?"Sign Up":"Sign In"}
+      </button>
+    </div>
+
     {err&&<div style={{marginTop:16,padding:"12px 16px",background:t.errBg,border:`1px solid ${t.errBorder}`,borderRadius:t.r,color:t.errText,fontSize:13,fontFamily:t.fb}}>{err}</div>}
   </div>;
 }
@@ -611,6 +636,13 @@ export default function App(){
     setView("dashboard");
   },[]);
 
+  const handleAuthSuccess=useCallback(async(data)=>{
+    const s={access_token:data.access_token,refresh_token:data.refresh_token||data.access_token,user:data.user};
+    setSession(s);
+    await loadUserData(s.access_token,s.user.id);
+    setView(null);
+  },[loadUserData]);
+
   useEffect(()=>{
     const init=async()=>{
       if(skipLogin){ setView(skipTarget); return; }
@@ -764,7 +796,7 @@ export default function App(){
     )}
 
     {view==="admin_login"&&<AdminLogin onSuccess={handleAdminLogin} t={t} dark={dark} setDark={setDark}/>}
-    {view==="auth"&&<AuthScreen t={t} dark={dark} setDark={setDark}/>}
+    {view==="auth"&&<AuthScreen onSuccess={handleAuthSuccess} t={t} dark={dark} setDark={setDark}/>}
     {view==="onboarding"&&<Onboarding profile={profile} setProfile={setProfile} onComplete={onboardingComplete} t={t}/>}
     {view==="dashboard"&&<Dashboard profile={profile} onGenerate={generate} onSettings={()=>setView("settings")} digests={allDigests} onViewDigest={viewHistoricDigest} t={t}/>}
     {view==="settings"&&<ProfileSettings profile={profile} setProfile={setProfile} onGenerate={generate} onSave={saveProfileToDb} saving={saving} t={t}/>}
