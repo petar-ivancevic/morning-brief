@@ -4,8 +4,8 @@ import { summarizeArticles } from './api-client';
 // ═══════════════════════════════════════════
 //  SUPABASE
 // ═══════════════════════════════════════════
-const SB_URL = "https://lsufycmbidtvhynhajrd.supabase.co";
-const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxzdWZ5Y21iaWR0dmh5bmhhanJkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NTE2MTAsImV4cCI6MjA4NjMyNzYxMH0.GrIwPjIJWGD2YAoCWqhSLNOg4beyQFxuv3IWoCQn5dY";
+const SB_URL = import.meta.env.VITE_SUPABASE_URL || "https://lsufycmbidtvhynhajrd.supabase.co";
+const SB_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxzdWZ5Y21iaWR0dmh5bmhhanJkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3NTE2MTAsImV4cCI6MjA4NjMyNzYxMH0.GrIwPjIJWGD2YAoCWqhSLNOg4beyQFxuv3IWoCQn5dY";
 const hdrs = (token) => ({ apikey:SB_KEY, Authorization:`Bearer ${token||SB_KEY}`, "Content-Type":"application/json", Prefer:"return=representation" });
 
 const authApi = {
