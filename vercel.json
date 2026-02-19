@@ -1,9 +1,6 @@
 {
   "functions": {
     "api/**/*.js": {
-      "maxDuration": 60
-    },
-    "api/cron/send-daily-briefs.js": {
       "maxDuration": 300
     }
   },
