@@ -63,7 +63,54 @@ const fmtTime=(d)=>{try{return new Date(d).toLocaleTimeString("en-US",{hour:"num
 const todayStr=()=>new Date().toLocaleDateString("en-US",{weekday:"long",year:"numeric",month:"long",day:"numeric"});
 const ICONS={Technology:"◈",Business:"◆",Finance:"◇",Health:"✦",Science:"✧",Politics:"◉",Sports:"◎",Entertainment:"✹",AI:"◈",Climate:"❋",Crypto:"◇",Startups:"✦"};
 const getIcon=(s)=>ICONS[s]||ICONS[Object.keys(ICONS).find(k=>s.toLowerCase().includes(k.toLowerCase()))]||"▸";
-const DEFAULT_PROFILE={categories:["Technology","Business"],expertise:[],companies:[],paywalled_sources:[],blocked_sources:[],max_articles_per_section:5,summary_style:"brief",email_delivery:false,delivery_time:"08:00"};
+const TIMEZONES=[
+  {g:"North America",zones:[
+    {v:"America/New_York",l:"Eastern Time (ET)"},
+    {v:"America/Chicago",l:"Central Time (CT)"},
+    {v:"America/Denver",l:"Mountain Time (MT)"},
+    {v:"America/Los_Angeles",l:"Pacific Time (PT)"},
+    {v:"America/Anchorage",l:"Alaska (AKT)"},
+    {v:"Pacific/Honolulu",l:"Hawaii (HT)"},
+    {v:"America/Toronto",l:"Toronto (ET)"},
+    {v:"America/Vancouver",l:"Vancouver (PT)"},
+  ]},
+  {g:"South America",zones:[
+    {v:"America/Sao_Paulo",l:"São Paulo (BRT)"},
+    {v:"America/Buenos_Aires",l:"Buenos Aires (ART)"},
+    {v:"America/Bogota",l:"Bogotá (COT)"},
+  ]},
+  {g:"Europe",zones:[
+    {v:"Europe/London",l:"London (GMT/BST)"},
+    {v:"Europe/Paris",l:"Paris (CET/CEST)"},
+    {v:"Europe/Berlin",l:"Berlin (CET/CEST)"},
+    {v:"Europe/Amsterdam",l:"Amsterdam (CET/CEST)"},
+    {v:"Europe/Zurich",l:"Zurich (CET/CEST)"},
+    {v:"Europe/Stockholm",l:"Stockholm (CET/CEST)"},
+    {v:"Europe/Warsaw",l:"Warsaw (CET/CEST)"},
+    {v:"Europe/Istanbul",l:"Istanbul (TRT)"},
+    {v:"Europe/Moscow",l:"Moscow (MSK)"},
+  ]},
+  {g:"Middle East & Africa",zones:[
+    {v:"Asia/Dubai",l:"Dubai (GST)"},
+    {v:"Asia/Riyadh",l:"Riyadh (AST)"},
+    {v:"Africa/Johannesburg",l:"Johannesburg (SAST)"},
+    {v:"Africa/Cairo",l:"Cairo (EET)"},
+  ]},
+  {g:"Asia & Pacific",zones:[
+    {v:"Asia/Kolkata",l:"India (IST)"},
+    {v:"Asia/Singapore",l:"Singapore (SGT)"},
+    {v:"Asia/Tokyo",l:"Tokyo (JST)"},
+    {v:"Asia/Shanghai",l:"Beijing/Shanghai (CST)"},
+    {v:"Asia/Seoul",l:"Seoul (KST)"},
+    {v:"Asia/Hong_Kong",l:"Hong Kong (HKT)"},
+    {v:"Australia/Sydney",l:"Sydney (AEST/AEDT)"},
+    {v:"Pacific/Auckland",l:"Auckland (NZST/NZDT)"},
+  ]},
+  {g:"UTC",zones:[
+    {v:"UTC",l:"UTC"},
+  ]},
+];
+const DEFAULT_PROFILE={categories:["Technology","Business"],expertise:[],companies:[],paywalled_sources:[],blocked_sources:[],max_articles_per_section:5,summary_style:"brief",email_delivery:false,delivery_time:"08:00",timezone:"UTC"};
 const QUICK_CATS=["Technology","Business","Finance","Health","Science","Politics","Sports","AI","Climate","Crypto","Startups","Entertainment"];
 
 const SUMMARY_STYLES=[
@@ -467,9 +514,21 @@ function ProfileSettings({profile,setProfile,onGenerate,onSave,saving,t,digests,
           <div style={{marginBottom:12}}>
             <Toggle value={profile.email_delivery||false} onChange={v=>up("email_delivery",v)} label="Enable daily delivery" t={t}/>
           </div>
-          {(profile.email_delivery||false)&&<div>
-            <label style={{fontSize:12,fontWeight:600,color:t.textSec,display:"block",marginBottom:8,fontFamily:t.fb}}>Delivery time (local)</label>
-            <input type="time" value={profile.delivery_time||"08:00"} onChange={e=>up("delivery_time",e.target.value)} style={{width:"100%",padding:"8px 12px",fontSize:14,border:`2px solid ${t.pillBorder||t.border}`,borderRadius:t.r,background:t.bgInput,color:t.text,outline:"none",fontFamily:t.fb,boxSizing:"border-box"}}/>
+          {(profile.email_delivery||false)&&<div style={{display:"flex",flexDirection:"column",gap:12}}>
+            <div>
+              <label style={{fontSize:12,fontWeight:600,color:t.textSec,display:"block",marginBottom:6,fontFamily:t.fb}}>Delivery time</label>
+              <input type="time" value={profile.delivery_time||"08:00"} onChange={e=>up("delivery_time",e.target.value)} style={{width:"100%",padding:"8px 12px",fontSize:14,border:`2px solid ${t.pillBorder||t.border}`,borderRadius:t.r,background:t.bgInput,color:t.text,outline:"none",fontFamily:t.fb,boxSizing:"border-box"}}/>
+            </div>
+            <div>
+              <label style={{fontSize:12,fontWeight:600,color:t.textSec,display:"block",marginBottom:6,fontFamily:t.fb}}>Timezone</label>
+              <select value={profile.timezone||"UTC"} onChange={e=>up("timezone",e.target.value)} style={{width:"100%",padding:"8px 12px",fontSize:13,border:`2px solid ${t.pillBorder||t.border}`,borderRadius:t.r,background:t.bgInput,color:t.text,outline:"none",fontFamily:t.fb,boxSizing:"border-box",cursor:"pointer"}}>
+                {TIMEZONES.map(group=>(
+                  <optgroup key={group.g} label={group.g}>
+                    {group.zones.map(tz=><option key={tz.v} value={tz.v}>{tz.l}</option>)}
+                  </optgroup>
+                ))}
+              </select>
+            </div>
           </div>}
         </div>
         <button onClick={onGenerate} disabled={profile.categories.length===0} style={{width:"100%",padding:"13px 0",fontSize:14,fontWeight:700,background:profile.categories.length>0?t.accent:t.bgAlt,color:profile.categories.length>0?t.accentText:t.textFaint,border:"none",borderRadius:t.r,cursor:profile.categories.length>0?"pointer":"not-allowed",boxShadow:profile.categories.length>0?t.accentShadow:"none",fontFamily:t.fb,transition:"all 0.2s",marginBottom:10}}>Generate Brief Now</button>
@@ -724,7 +783,7 @@ export default function App(){
     const rows=await dbApi.select("profiles",at,{id:uid});
     if(rows.length>0){
       const p=rows[0];
-      setProfile({categories:p.categories||["Technology","Business"],expertise:p.expertise||[],companies:p.companies||[],paywalled_sources:p.paywalled_sources||[],blocked_sources:p.blocked_sources||[],max_articles_per_section:p.max_articles_per_section||5,summary_style:p.summary_style||"brief",email_delivery:p.email_delivery||false,delivery_time:p.delivery_time||"08:00"});
+      setProfile({categories:p.categories||["Technology","Business"],expertise:p.expertise||[],companies:p.companies||[],paywalled_sources:p.paywalled_sources||[],blocked_sources:p.blocked_sources||[],max_articles_per_section:p.max_articles_per_section||5,summary_style:p.summary_style||"brief",email_delivery:p.email_delivery||false,delivery_time:p.delivery_time||"08:00",timezone:p.timezone||Intl.DateTimeFormat().resolvedOptions().timeZone||"UTC"});
       setIsNewUser(false);
     }else{setIsNewUser(true);}
     const digs=await dbApi.select("digests",at,{user_id:uid});

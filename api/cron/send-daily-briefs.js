@@ -6,6 +6,7 @@ import { Resend } from 'resend';
 const resend = new Resend(process.env.RESEND_API_KEY);
 const SB_URL = process.env.VITE_SUPABASE_URL;
 const SB_KEY = process.env.VITE_SUPABASE_ANON_KEY;
+const SB_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 export const config = {
   maxDuration: 300, // 5 minutes max
@@ -20,7 +21,8 @@ export default async function handler(req, res) {
 
   try {
     const currentHour = new Date().getUTCHours();
-    console.log(`Cron running for hour: ${currentHour}`);
+    const targetHour = (currentHour + 1) % 24; // cron runs at :55, emails go out for the next hour
+    console.log(`Cron running at hour: ${currentHour}, targeting delivery_time: ${targetHour}:00`);
 
     // Get all users with email_delivery enabled
     const profilesResponse = await fetch(
@@ -51,8 +53,8 @@ export default async function handler(req, res) {
           `${SB_URL}/auth/v1/admin/users/${profile.id}`,
           {
             headers: {
-              apikey: SB_KEY,
-              Authorization: `Bearer ${SB_KEY}`
+              apikey: SB_SERVICE_KEY,
+              Authorization: `Bearer ${SB_SERVICE_KEY}`
             }
           }
         );
@@ -72,12 +74,22 @@ export default async function handler(req, res) {
           continue;
         }
 
-        // Check if user's delivery time matches current hour
+        // Check if user's delivery time matches target hour in their timezone
         const deliveryTime = profile.delivery_time || '08:00';
         const [deliveryHour] = deliveryTime.split(':').map(Number);
+        const timezone = profile.timezone || 'UTC';
 
-        // Simple hour matching (you can enhance with timezone support)
-        if (deliveryHour !== currentHour) {
+        // Convert targetHour (UTC) to the user's local hour
+        const targetUTCDate = new Date();
+        targetUTCDate.setUTCHours(targetHour, 0, 0, 0);
+        const localHourStr = new Intl.DateTimeFormat('en-US', {
+          timeZone: timezone,
+          hour: 'numeric',
+          hour12: false
+        }).format(targetUTCDate);
+        const localHour = parseInt(localHourStr, 10) % 24;
+
+        if (localHour !== deliveryHour) {
           continue; // Not time for this user yet
         }
 
