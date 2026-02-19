@@ -563,6 +563,85 @@ function GeneratingScreen({progress,stage,t}){
 }
 
 // ═══════════════════════════════════════════
+//  USER GUIDE MODAL
+// ═══════════════════════════════════════════
+function UserGuideModal({onClose,t}){
+  const[tab,setTab]=useState("guide");
+  const tabStyle=(active)=>({padding:"8px 16px",fontSize:13,fontWeight:600,fontFamily:t.fb,cursor:"pointer",border:"none",borderBottom:`2px solid ${active?t.accentSolid:"transparent"}`,background:"transparent",color:active?t.accentSolid:t.textMut,transition:"all 0.15s"});
+  return <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,zIndex:9999,animation:"fadeIn 0.2s"}}>
+    <div onClick={e=>e.stopPropagation()} style={{background:t.bgCard,borderRadius:t.r,maxWidth:580,width:"100%",maxHeight:"90vh",overflow:"auto",boxShadow:"0 20px 60px rgba(0,0,0,0.3)",animation:"slideUp 0.3s"}}>
+      <div style={{padding:"20px 24px",borderBottom:`1px solid ${t.border}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <h3 style={{margin:0,fontSize:18,fontWeight:700,color:t.text,fontFamily:t.fb}}>How this tool works</h3>
+        <button onClick={onClose} style={{background:"transparent",border:"none",fontSize:24,color:t.textMut,cursor:"pointer",padding:0,lineHeight:1}}>&times;</button>
+      </div>
+      <div style={{display:"flex",borderBottom:`1px solid ${t.border}`,paddingLeft:8}}>
+        <button style={tabStyle(tab==="guide")} onClick={()=>setTab("guide")}>Guide</button>
+        <button style={tabStyle(tab==="email")} onClick={()=>setTab("email")}>Email Setup</button>
+      </div>
+      {tab==="guide"&&<div style={{padding:24,fontFamily:t.fb,fontSize:14,lineHeight:1.8,color:t.text}}>
+
+        <div style={{marginBottom:24}}>
+          <h4 style={{fontSize:13,fontWeight:700,color:t.accentSolid,textTransform:"uppercase",letterSpacing:1,margin:"0 0 10px"}}>1 — Configure your profile</h4>
+          <p style={{margin:0,color:t.textMut}}>Go to <strong style={{color:t.text}}>Settings</strong> to choose your topics (e.g. Finance, Technology, Healthcare), add specific companies you follow, set your preferred number of articles per section, and pick sources to block or allow.</p>
+        </div>
+
+        <div style={{marginBottom:24}}>
+          <h4 style={{fontSize:13,fontWeight:700,color:t.accentSolid,textTransform:"uppercase",letterSpacing:1,margin:"0 0 10px"}}>2 — Generate your brief</h4>
+          <p style={{margin:0,color:t.textMut}}>Hit <strong style={{color:t.text}}>Generate Brief</strong> from the dashboard. The tool pulls the latest articles across your selected topics, filters out sources you've blocked, ranks by recency and quality, and assembles your digest in seconds.</p>
+        </div>
+
+        <div style={{marginBottom:24}}>
+          <h4 style={{fontSize:13,fontWeight:700,color:t.accentSolid,textTransform:"uppercase",letterSpacing:1,margin:"0 0 10px"}}>3 — Read your digest</h4>
+          <p style={{margin:0,color:t.textMut}}>Articles are grouped by topic. Use it as your <strong style={{color:t.text}}>morning dashboard</strong> — open the app at the start of your day for a quick read across everything you care about, without bouncing between news sites.</p>
+        </div>
+
+        <div style={{marginBottom:24,padding:16,background:t.bgAlt,borderRadius:t.r,border:`1px solid ${t.border}`}}>
+          <h4 style={{fontSize:13,fontWeight:700,color:t.accentSolid,textTransform:"uppercase",letterSpacing:1,margin:"0 0 10px"}}>Set-and-forget: daily email delivery</h4>
+          <p style={{margin:"0 0 10px",color:t.textMut}}>Prefer not to open the app every morning? Enable <strong style={{color:t.text}}>email delivery</strong> in Settings. Choose a delivery time and timezone, and your brief will arrive in your inbox automatically — the app becomes optional.</p>
+          <p style={{margin:0,color:t.textMut}}>Think of it as a personalised newsletter that updates itself daily based on what you actually care about.</p>
+        </div>
+
+        <div style={{marginBottom:0}}>
+          <h4 style={{fontSize:13,fontWeight:700,color:t.accentSolid,textTransform:"uppercase",letterSpacing:1,margin:"0 0 10px"}}>4 — History</h4>
+          <p style={{margin:0,color:t.textMut}}>Every brief you generate is saved. Access past digests from the dashboard to review what was happening on any previous day.</p>
+        </div>
+
+      </div>}
+      {tab==="email"&&<div style={{padding:24,fontFamily:t.fb,fontSize:14,lineHeight:1.7,color:t.text}}>
+        <p style={{marginTop:0,color:t.textMut}}>Emails landing in junk? Follow these steps to make sure Morning Brief reaches your inbox:</p>
+        <div style={{marginBottom:20}}>
+          <h4 style={{fontSize:15,fontWeight:700,color:t.accentSolid,margin:"16px 0 8px"}}>Outlook / Office 365</h4>
+          <ol style={{margin:0,paddingLeft:20,color:t.text}}>
+            <li style={{marginBottom:8}}>Right-click the email → "Junk" → "Never Block Sender"</li>
+            <li style={{marginBottom:8}}>Or: Settings → Mail → Junk email → Add <code style={{background:t.bgAlt,padding:"2px 6px",borderRadius:4,fontSize:13}}>noreply@petarivancevic.com</code> to Safe Senders</li>
+            <li style={{marginBottom:8}}>Drag email from Junk to Inbox to train the filter</li>
+          </ol>
+        </div>
+        <div style={{marginBottom:20}}>
+          <h4 style={{fontSize:15,fontWeight:700,color:t.accentSolid,margin:"16px 0 8px"}}>Gmail</h4>
+          <ol style={{margin:0,paddingLeft:20,color:t.text}}>
+            <li style={{marginBottom:8}}>Open email in Spam folder → Click "Not spam"</li>
+            <li style={{marginBottom:8}}>Click sender name → "Add to contacts"</li>
+            <li style={{marginBottom:8}}>Or: Search <code style={{background:t.bgAlt,padding:"2px 6px",borderRadius:4,fontSize:13}}>from:noreply@petarivancevic.com</code> → "Create filter" → Check "Never send to Spam"</li>
+          </ol>
+        </div>
+        <div style={{marginBottom:20}}>
+          <h4 style={{fontSize:15,fontWeight:700,color:t.accentSolid,margin:"16px 0 8px"}}>Apple Mail</h4>
+          <ol style={{margin:0,paddingLeft:20,color:t.text}}>
+            <li style={{marginBottom:8}}>Open email → Click sender → "Add to Contacts"</li>
+            <li style={{marginBottom:8}}>Mark as "Not Junk" if in Junk folder</li>
+          </ol>
+        </div>
+        <div style={{padding:12,background:t.alertBg,border:`1px solid ${t.alertBorder}`,borderRadius:t.r,fontSize:13,color:t.alertText}}>
+          <strong>Note:</strong> It may take a few emails to build sender reputation. Each email you receive and don't mark as spam helps improve future deliverability.
+        </div>
+      </div>}
+    </div>
+    <style>{`@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}@keyframes slideUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}`}</style>
+  </div>;
+}
+
+// ═══════════════════════════════════════════
 //  WHITELIST INSTRUCTIONS MODAL
 // ═══════════════════════════════════════════
 function WhitelistModal({onClose,t}){
@@ -780,6 +859,7 @@ export default function App(){
   const[saving,setSaving]=useState(false);
   const[aiEnabled,setAiEnabled]=useState(false);
   const[isNewUser,setIsNewUser]=useState(false);
+  const[showGuide,setShowGuide]=useState(false);
 
   const loadUserData=useCallback(async(at,uid)=>{
     const rows=await dbApi.select("profiles",at,{id:uid});
@@ -947,6 +1027,7 @@ export default function App(){
           <span style={{fontFamily:t.fd,fontSize:14,fontWeight:700,color:t.text}}>Morning Brief</span>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
+          <button onClick={()=>setShowGuide(true)} style={{padding:"4px 10px",fontSize:12,fontWeight:600,fontFamily:t.fb,background:"transparent",border:`1px solid ${t.border}`,borderRadius:6,color:t.textSec,cursor:"pointer"}}>How this tool works</button>
           <ThemeToggle dark={dark} setDark={setDark} t={t}/>
           <span style={{fontSize:12,color:t.text,fontFamily:t.fb,maxWidth:160,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{session.user.email}</span>
           <button onClick={signOut} style={{background:"transparent",border:"none",color:t.accentSolid,cursor:"pointer",fontSize:12,fontWeight:600,fontFamily:t.fb}}>Sign Out</button>
@@ -969,5 +1050,6 @@ export default function App(){
     {view==="settings"&&<ProfileSettings profile={profile} setProfile={setProfile} onGenerate={generate} onSave={saveProfileToDb} saving={saving} t={t} digests={allDigests} onViewDigest={viewHistoricDigest}/>}
     {view==="generating"&&<GeneratingScreen progress={progress} stage={stage} t={t}/>}
     {view==="digest"&&digest&&<DigestView digest={digest} profile={profile} onBack={()=>setView("dashboard")} onSettings={()=>setView("settings")} aiEnabled={aiEnabled} t={t} session={session}/>}
+    {showGuide&&<UserGuideModal onClose={()=>setShowGuide(false)} t={t}/>}
   </div>;
 }
