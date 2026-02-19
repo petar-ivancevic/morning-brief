@@ -110,7 +110,7 @@ const TIMEZONES=[
     {v:"UTC",l:"UTC"},
   ]},
 ];
-const DEFAULT_PROFILE={categories:["Technology","Business"],expertise:[],companies:[],paywalled_sources:[],blocked_sources:[],max_articles_per_section:5,summary_style:"brief",email_delivery:false,delivery_time:"08:00",timezone:"UTC"};
+const DEFAULT_PROFILE={categories:[],expertise:[],companies:[],paywalled_sources:[],blocked_sources:[],max_articles_per_section:5,summary_style:"brief",email_delivery:false,delivery_time:"08:00",timezone:"UTC"};
 const QUICK_CATS=["Technology","Business","Finance","Health","Science","Politics","Sports","AI","Climate","Crypto","Startups","Entertainment"];
 
 const SUMMARY_STYLES=[
@@ -517,7 +517,9 @@ function ProfileSettings({profile,setProfile,onGenerate,onSave,saving,t,digests,
           {(profile.email_delivery||false)&&<div style={{display:"flex",flexDirection:"column",gap:12}}>
             <div>
               <label style={{fontSize:12,fontWeight:600,color:t.textSec,display:"block",marginBottom:6,fontFamily:t.fb}}>Delivery time</label>
-              <input type="time" value={profile.delivery_time||"08:00"} onChange={e=>up("delivery_time",e.target.value)} style={{width:"100%",padding:"8px 12px",fontSize:14,border:`2px solid ${t.pillBorder||t.border}`,borderRadius:t.r,background:t.bgInput,color:t.text,outline:"none",fontFamily:t.fb,boxSizing:"border-box"}}/>
+              <select value={profile.delivery_time||"08:00"} onChange={e=>up("delivery_time",e.target.value)} style={{width:"100%",padding:"8px 12px",fontSize:14,border:`2px solid ${t.pillBorder||t.border}`,borderRadius:t.r,background:t.bgInput,color:t.text,outline:"none",fontFamily:t.fb,boxSizing:"border-box",cursor:"pointer"}}>
+                {Array.from({length:24},(_,i)=>{const h=String(i).padStart(2,"0");const label=i===0?"12:00 AM":i<12?`${i}:00 AM`:i===12?"12:00 PM":`${i-12}:00 PM`;return <option key={h} value={`${h}:00`}>{label}</option>;})}
+              </select>
             </div>
             <div>
               <label style={{fontSize:12,fontWeight:600,color:t.textSec,display:"block",marginBottom:6,fontFamily:t.fb}}>Timezone</label>
@@ -783,7 +785,7 @@ export default function App(){
     const rows=await dbApi.select("profiles",at,{id:uid});
     if(rows.length>0){
       const p=rows[0];
-      setProfile({categories:p.categories||["Technology","Business"],expertise:p.expertise||[],companies:p.companies||[],paywalled_sources:p.paywalled_sources||[],blocked_sources:p.blocked_sources||[],max_articles_per_section:p.max_articles_per_section||5,summary_style:p.summary_style||"brief",email_delivery:p.email_delivery||false,delivery_time:p.delivery_time||"08:00",timezone:p.timezone||Intl.DateTimeFormat().resolvedOptions().timeZone||"UTC"});
+      setProfile({categories:p.categories||["Technology","Business"],expertise:p.expertise||[],companies:p.companies||[],paywalled_sources:p.paywalled_sources||[],blocked_sources:p.blocked_sources||[],max_articles_per_section:p.max_articles_per_section||5,summary_style:p.summary_style||"brief",email_delivery:p.email_delivery||false,delivery_time:(p.delivery_time?p.delivery_time.split(":")[0].padStart(2,"0")+":00":"08:00"),timezone:p.timezone||Intl.DateTimeFormat().resolvedOptions().timeZone||"UTC"});
       setIsNewUser(false);
     }else{setIsNewUser(true);}
     const digs=await dbApi.select("digests",at,{user_id:uid});
