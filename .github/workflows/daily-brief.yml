@@ -3,7 +3,7 @@ name: Send Daily Briefs
 # Run every hour
 on:
   schedule:
-    - cron: '0 * * * *'  # Every hour at minute 0
+    - cron: '55 * * * *'  # Every hour at minute 55 (emails sent 5 min early)
   workflow_dispatch:  # Allow manual trigger for testing
 
 jobs:
