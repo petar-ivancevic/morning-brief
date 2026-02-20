@@ -21,15 +21,15 @@ export default async function handler(req, res) {
 
   try {
     const currentHour = new Date().getUTCHours();
-    const targetHour = (currentHour + 1) % 24; // cron runs at :55, emails go out for the next hour
-    console.log(`Cron running at hour: ${currentHour}, targeting delivery_time: ${targetHour}:00`);
+    console.log(`Cron running at UTC hour: ${currentHour}`);
 
-    // Get all users with email_delivery enabled
+    // Get all users with email_delivery enabled — requires service role key to bypass RLS
     const profilesResponse = await fetch(
       `${SB_URL}/rest/v1/profiles?email_delivery=eq.true&select=*`,
       {
         headers: {
-          apikey: SB_KEY,
+          apikey: SB_SERVICE_KEY,
+          Authorization: `Bearer ${SB_SERVICE_KEY}`,
           'Content-Type': 'application/json'
         }
       }
@@ -79,9 +79,9 @@ export default async function handler(req, res) {
         const [deliveryHour] = deliveryTime.split(':').map(Number);
         const timezone = profile.timezone || 'UTC';
 
-        // Convert targetHour (UTC) to the user's local hour
+        // Convert current UTC hour to the user's local hour
         const targetUTCDate = new Date();
-        targetUTCDate.setUTCHours(targetHour, 0, 0, 0);
+        targetUTCDate.setUTCHours(currentHour, 0, 0, 0);
         const localHourStr = new Intl.DateTimeFormat('en-US', {
           timeZone: timezone,
           hour: 'numeric',
