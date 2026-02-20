@@ -1,5 +1,5 @@
 // Vercel Cron Job - Sends scheduled daily briefs
-// Runs every hour and checks which users need their brief sent
+// Runs once daily at 7 AM CST (13:00 UTC) via vercel.json cron schedule
 
 import { Resend } from 'resend';
 
