@@ -20,8 +20,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const currentHour = new Date().getUTCHours();
-    console.log(`Cron running at UTC hour: ${currentHour}`);
+    console.log(`Cron running at: ${new Date().toISOString()}`);
 
     // Get all users with email_delivery enabled — requires service role key to bypass RLS
     const profilesResponse = await fetch(
@@ -72,25 +71,6 @@ export default async function handler(req, res) {
           console.error(`No email for user ${profile.id}`);
           errorCount++;
           continue;
-        }
-
-        // Check if user's delivery time matches target hour in their timezone
-        const deliveryTime = profile.delivery_time || '08:00';
-        const [deliveryHour] = deliveryTime.split(':').map(Number);
-        const timezone = profile.timezone || 'UTC';
-
-        // Convert current UTC hour to the user's local hour
-        const targetUTCDate = new Date();
-        targetUTCDate.setUTCHours(currentHour, 0, 0, 0);
-        const localHourStr = new Intl.DateTimeFormat('en-US', {
-          timeZone: timezone,
-          hour: 'numeric',
-          hour12: false
-        }).format(targetUTCDate);
-        const localHour = parseInt(localHourStr, 10) % 24;
-
-        if (localHour !== deliveryHour) {
-          continue; // Not time for this user yet
         }
 
         console.log(`Generating brief for ${userEmail}...`);
