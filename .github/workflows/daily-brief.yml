@@ -1,9 +1,10 @@
 name: Send Daily Briefs
 
-# Run every hour
+# Run once daily at 12:55 UTC (6:55 AM CST)
 on:
-  schedule:
-    - cron: '55 * * * *'  # Every hour at minute 55 (emails sent 5 min early)
+  # TEMPORARILY DISABLED FOR WEEKEND - re-enable Monday
+  # schedule:
+  #   - cron: '55 12 * * *'  # Once daily at 12:55 UTC (6:55 AM CST)
   workflow_dispatch:  # Allow manual trigger for testing
 
 jobs:
